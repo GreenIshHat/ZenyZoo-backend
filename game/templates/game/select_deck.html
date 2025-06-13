@@ -1,0 +1,16 @@
+{% extends "base.html" %}
+{% block content %}
+<h2>Select 7 Cards for Your Battle Deck</h2>
+
+<form method="post">
+  {% csrf_token %}
+  {% for card in owned_cards %}
+    <label>
+      <input type="checkbox" name="cards" value="{{ card.id }}">
+      {{ card.card.name }}
+    </label><br>
+  {% endfor %}
+  <button type="submit">Save Deck</button>
+</form>
+{% endblock %}
+

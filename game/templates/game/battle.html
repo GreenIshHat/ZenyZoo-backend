@@ -1,0 +1,26 @@
+<!-- templates/game/battle.html -->
+{% extends "base.html" %}
+{% block title %}Battle Arena{% endblock %}
+{% load static %}
+
+{% block content %}
+<h1>Zenyzoo: Match #{{ match_id }}</h1>
+
+<div id="info-bar">
+  <strong>Current Turn:</strong> <span id="player-turn">Loading...</span>
+</div>
+
+<div id="game-board" class="grid"></div>
+
+<h2>Your Deck</h2>
+<div id="player-deck" class="deck"></div>
+
+{% block scripts %}
+  <script>
+    const playerId = {{ request.user.id }};
+    const matchId = {{ match_id }};
+  </script>
+  <script src="{% static 'game/script.js' %}"></script>
+{% endblock %}
+{% endblock %}
+

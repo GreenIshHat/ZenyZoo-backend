@@ -1,0 +1,130 @@
+[
+    {
+        "name": "Sinister ShadOwl Overlord",
+        "strength_top": 8,
+        "strength_bottom": 8,
+        "strength_left": 2,
+        "strength_right": 8,
+        "image": "Sinister_Shadow_Overlord.png",
+        "lore": "Master of ambushes. Feeds on oversight. Will never strike first\u2014but always finishes it."
+    },
+    {
+        "name": "Mystic Pandamonium Blade",
+        "strength_top": 1,
+        "strength_bottom": 1,
+        "strength_left": 5,
+        "strength_right": 5,
+        "image": "Mystic_Pandamonium_Blade.png",
+        "lore": "Masked guardian of ancient forests. Looks harmless. Fights like myth."
+    },
+    {
+        "name": "Chipper Vortex Squirrel",
+        "strength_top": 1,
+        "strength_bottom": 5,
+        "strength_left": 6,
+        "strength_right": 8,
+        "image": "Squirrel_Chipper_Vortex.png",
+        "lore": "Chaos runner. Distracts with cuteness, wins with precision flanks."
+    },
+    {
+        "name": "Chopper Storm Squirrel",
+        "strength_top": 1,
+        "strength_bottom": 5,
+        "strength_left": 6,
+        "strength_right": 8,
+        "image": "Squirrel_Chopper_Storm.png",
+        "lore": "Twin of the Vortex. Where one confuses, this one disrupts. Relentless symmetry."
+    },
+    {
+        "name": "Majestic Lion Monarch",
+        "strength_top": 4,
+        "strength_bottom": 3,
+        "strength_left": 3,
+        "strength_right": 6,
+        "image": "Majestic_Lion_Monarch.png",
+        "lore": "Leads by calm. Attacks only when the board forgets his reach."
+    },
+    {
+        "name": "Giraffe Psyche Twister",
+        "strength_top": 6,
+        "strength_bottom": 8,
+        "strength_left": 5,
+        "strength_right": 4,
+        "image": "Giraffe_Psyche_Twister.png",
+        "lore": "Lateral predator. Sees further than most. Weak on impulse, deadly in pattern."
+    },
+    {
+        "name": "Rabbid Fanged Fury",
+        "strength_top": 7,
+        "strength_bottom": 9,
+        "strength_left": 6,
+        "strength_right": 5,
+        "image": "Rabbid_Fanged_Fury.png",
+        "lore": "Uncaged instinct. Loses to calm. But you are not calm, are you?"
+    },
+    {
+        "name": "Hippo Vortex Maelstrom",
+        "strength_top": 4,
+        "strength_bottom": 5,
+        "strength_left": 1,
+        "strength_right": 9,
+        "image": "Hippo_Vortex_Maelstrom.png",
+        "lore": "Doesn\u2019t charge. Just collapses through. A gravity of moves."
+    },
+    {
+        "name": "Slothful Psychedelic Dream",
+        "strength_top": 7,
+        "strength_bottom": 7,
+        "strength_left": 4,
+        "strength_right": 1,
+        "image": "Slothful_Psychedelic_Dream.png",
+        "lore": "Moves once. That\u2019s all it needs. A dream that waits."
+    },
+    {
+        "name": "Turtle Abyssal Enigma",
+        "strength_top": 4,
+        "strength_bottom": 1,
+        "strength_left": 9,
+        "strength_right": 2,
+        "image": "Turtle_Abyssal_Enigma.png",
+        "lore": "Not slow. Deliberate. What it holds, the grid may never fully see."
+    },
+    {
+        "name": "Crow Oracle Observer",
+        "strength_top": 5,
+        "strength_bottom": 2,
+        "strength_left": 4,
+        "strength_right": 8,
+        "image": "Crow_Oracle_Observer.png",
+        "lore": "Knows what\u2019s not on the board yet. Disrupts premonitions."
+    },
+    {
+        "name": "Luna Phantom Mirage Lynx",
+        "strength_top": 9,
+        "strength_bottom": 2,
+        "strength_left": 4,
+        "strength_right": 6,
+        "image": "Luna_Phantom_Mirage.png",
+        "lore": "Woven of silence and shimmer. Appears only at the threshold of the turn."
+    },
+	{
+	  "name": "Anthropomorphic Hyena",
+	  "strength_top": 3,
+	  "strength_bottom": 6,
+	  "strength_left": 7,
+	  "strength_right": 2,
+	  "image": "Anthropomorphic_Hyena_Card_2.webp",
+	  "lore": "Laughs at your formation. Breaks patterns through chaos and glee."
+	},
+	{
+	  "name": "Diabolical Millipede",
+	  "strength_top": 2,
+	  "strength_bottom": 4,
+	  "strength_left": 8,
+	  "strength_right": 6,
+	  "image": "Diabolical_Millipede_Card.webp",
+	  "lore": "Too many legs to block. Predict its path, and it will coil around you."
+	}
+
+
+]

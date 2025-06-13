@@ -1,0 +1,15 @@
+home.html{% extends "base.html" %}
+{% block title %}Zeny:Zoo{% endblock %}
+
+{% block content %}
+  <h2>Welcome to ZenyZoo, {{ user.username }}!</h2>
+
+  <ul>
+    <li><a href="{% url 'list_open_matches' %}">Join a Match</a></li>
+    <li><a href="{% url 'create_match' %}">Create Match</a></li>
+    <li><a href="{% url 'view_shop' %}">Shop</a></li>
+    <li><a href="/game/profile/">Your Deck</a></li>
+    <li><form method="post" action="{% url 'logout' %}">{% csrf_token %}<button type="submit">Logout</button></form></li>
+  </ul>
+{% endblock %}
+
