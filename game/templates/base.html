@@ -1,11 +1,11 @@
 <!-- templates/base.html -->
-{% load static %}
+
 <!DOCTYPE html>
 <html lang="en">
 <head>
   <meta charset="UTF-8">
   <title>{% block title %}Zenyzoo{% endblock %}</title>
-
+	{% load static %}
   <link rel="stylesheet" href="{% static 'game/style.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
@@ -22,6 +22,7 @@
   </main>
 
   {% block scripts %}{% endblock %}
+<script src="{% static 'game/script.js' %}"></script>
 </body>
 </html>
 

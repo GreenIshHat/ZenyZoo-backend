@@ -6,14 +6,23 @@ from django.contrib.auth.decorators import login_required
 from rest_framework import status
 from .models import Match, Player, PlayerCard, Card
 from .utils import initialize_player_deck
-from django.shortcuts import render
-from .bots import RandomBot
+from django.shortcuts import render, redirect
 from django.shortcuts import get_object_or_404
+from .bots import load_bot
 
 @login_required
 def home_view(request):
     return render(request, 'game/home.html')
 
+
+def register_form(request):
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+        if not User.objects.filter(username=username).exists():
+            User.objects.create_user(username=username, password=password)
+            return redirect('login')
+    return render(request, 'registration/register.html')
 
 @login_required
 def profile_view(request):
@@ -245,7 +254,8 @@ def battle_bot(request):
         return Response({"error": "It's not bot's turn."}, status=400)
 
     bot_player = match.player_two
-    strategy = RandomBot()
+    strategy = strategy = load_bot("random")  # or "minmax", etc.
+
     move = strategy.choose_move(match, bot_player)
 
     if not move:
