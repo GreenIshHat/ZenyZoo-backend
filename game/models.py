@@ -11,6 +11,13 @@ class Player(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_bot = models.BooleanField(default=False)
 
+    bot_strategy = models.CharField(
+        max_length=32, 
+        choices=[('random', 'Random')],
+        default='random'
+    )
+
+
 class Card(models.Model):
     name = models.CharField(max_length=100)
     image = models.ImageField(upload_to='deck/')  # ← changed from CharField
@@ -54,7 +61,11 @@ class ShopCard(models.Model):
 
 class Match(models.Model):
     player_one = models.ForeignKey(Player, related_name='matches_as_p1', on_delete=models.CASCADE)
-    player_two = models.ForeignKey(Player, related_name='matches_as_p2', on_delete=models.CASCADE)
+    player_two = models.ForeignKey(Player, related_name='matches_as_p2', 
+        on_delete=models.CASCADE,
+        null=True,          # ← allow empty slot
+        blank=True          # ← for admin/forms
+    )
     board_state = models.JSONField(default=dict)  # e.g. {"0": null, "1": {"card_id": 5, "player_id": 2}, ...}
     is_active = models.BooleanField(default=True)
     player_one_deck = models.ManyToManyField(Card, related_name='deck_p1')

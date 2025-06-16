@@ -1,4 +1,6 @@
-from .models import Card, PlayerCard
+# game/utils.py
+
+from .models import Card, PlayerCard, MatchMove
 
 STARTER_CARD_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
 
@@ -8,8 +10,7 @@ def initialize_player_deck(player):
         PlayerCard.objects.get_or_create(owner=player, card=card)
 
 
-# game/utils.py
-
+# adjacency map: for each cell index, which neighbors to compare
 adjacency = {
     0: {'right': 1, 'bottom': 3},
     1: {'left': 0, 'right': 2, 'bottom': 4},
@@ -22,26 +23,48 @@ adjacency = {
     8: {'top': 5, 'left': 7},
 }
 
-def get_card_stats(card):
+
+def get_card_stats(player_card):
+    """
+    Accepts a PlayerCard instance and returns its four edge strengths.
+    """
     return {
-        'top': card.card.strength_top,
-        'right': card.card.strength_right,
-        'bottom': card.card.strength_bottom,
-        'left': card.card.strength_left
+        'top':    player_card.card.strength_top,
+        'right':  player_card.card.strength_right,
+        'bottom': player_card.card.strength_bottom,
+        'left':   player_card.card.strength_left,
     }
 
-def check_flips(board, new_pos, new_card_obj):
+
+def check_flips(board, new_pos, new_card_pc):
+    """
+    board: mapping position -> either
+           a) MatchMove instance
+           b) dict with key 'card' pointing to a PlayerCard
+    new_pos: int (0–8) where we’re placing new_card_pc
+    new_card_pc: PlayerCard instance just played
+
+    Returns a list of neighbor positions whose cards should flip.
+    """
     flips = []
-    new_stats = get_card_stats(new_card_obj)
+    new_stats = get_card_stats(new_card_pc)
 
     for direction, neighbor_pos in adjacency.get(new_pos, {}).items():
         neighbor = board.get(neighbor_pos)
         if not neighbor:
             continue
 
-        neighbor_stats = get_card_stats(neighbor['card'])
+        # Extract the PlayerCard for that neighbor:
+        if isinstance(neighbor, dict):
+            # old API style
+            neighbor_pc = neighbor['card']
+        else:
+            # MatchMove instance style
+            neighbor_pc = neighbor.card
 
-        # Compare the appropriate stats
+        neighbor_stats = get_card_stats(neighbor_pc)
+
+        # Compare edge values based on direction
         if direction == 'top' and new_stats['top'] > neighbor_stats['bottom']:
             flips.append(neighbor_pos)
         elif direction == 'bottom' and new_stats['bottom'] > neighbor_stats['top']:
@@ -52,6 +75,3 @@ def check_flips(board, new_pos, new_card_obj):
             flips.append(neighbor_pos)
 
     return flips
-
-
-

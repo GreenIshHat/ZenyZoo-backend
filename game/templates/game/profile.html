@@ -1,24 +1,43 @@
 {% extends "base.html" %}
-{% block title %}Your Profile{% endblock %}
+{% block title %}{{ user.username }}'s Profile{% endblock %}
+
 {% block content %}
-<h2>{{ user.username }}'s Profile</h2>
+  <nav class="page-nav">
+    <a href="{% url 'home' %}">Dashboard</a> |
+    <a href="{% url 'profile_view' %}">Profile</a> |
+    <a href="{% url 'choose_battle_deck' %}">Select Deck</a> |
+    <a href="{% url 'match_list' %}">Matches</a> |
+    <a href="{% url 'shop_view' %}">Shop</a>
+  </nav>
 
-<h3>Battle Deck</h3>
-<div class="deck">
-  {% for card in battle_deck %}
-    <div class="card" style="background-image: url('{{ card.card.image.url }}')" title="{{ card.card.name }}"></div>
-  {% empty %}
-    <p>You haven’t selected your deck yet.</p>
-  {% endfor %}
-</div>
+  <h2>{{ user.username }}'s Profile</h2>
 
-<h3>Owned Cards</h3>
-<div class="deck">
-  {% for card in all_cards %}
-    <div class="card" style="background-image: url('{{ card.card.image.url }}')" title="{{ card.card.name }}"></div>
-  {% empty %}
-    <p>You have no cards.</p>
-  {% endfor %}
-</div>
+  <h3>Battle Deck</h3>
+  <div class="deck">
+    {% for card in battle_deck %}
+      <div class="card" style="background-image: url('{{ card.card.image.url }}')" title="{{ card.card.name }}"></div>
+    {% empty %}
+      <p>You haven’t selected your deck yet.</p>
+    {% endfor %}
+  </div>
+
+  <h3>Owned Cards</h3>
+  <div class="deck">
+    {% for card in all_cards %}
+      <div class="card" style="background-image: url('{{ card.card.image.url }}')" title="{{ card.card.name }}"></div>
+    {% empty %}
+      <p>You have no cards.</p>
+    {% endfor %}
+  </div>
+
+  <style>
+    .page-nav {
+      margin-bottom: 1rem;
+      font-size: .9rem;
+    }
+    .page-nav a {
+      text-decoration: none;
+      margin-right: .5rem;
+    }
+  </style>
 {% endblock %}
-

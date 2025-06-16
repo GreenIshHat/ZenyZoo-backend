@@ -1,6 +1,7 @@
-# bots.py
 import random
-from .models import MatchMove, PlayerCard
+from abc import ABC, abstractmethod
+
+from game.models import PlayerCard, MatchMove
 
 """
 Optional Refactor: game/strategies/ Module
@@ -22,32 +23,46 @@ from .strategies.qbot import QBot
 
 """
 
-def load_bot(strategy_name):
-    return BOT_CLASSES.get(strategy_name.lower(), RandomBot)()
 
 
-class BotStrategy:
+
+class BotStrategy(ABC):
+    @abstractmethod
     def choose_move(self, match, bot_player):
-        raise NotImplementedError()
+        """
+        Return a dict {'position': int, 'card': PlayerCard}, or None.
+        """
+        pass
 
 class RandomBot(BotStrategy):
     def choose_move(self, match, bot_player):
-        # Find empty board positions (0 to 8)
-        occupied = MatchMove.objects.filter(match=match).values_list('position', flat=True)
-        empty_positions = [i for i in range(9) if i not in occupied]
+        # 1) Free positions
+        occupied = {m.position for m in MatchMove.objects.filter(match=match)}
+        free_positions = [i for i in range(9) if i not in occupied]
+        if not free_positions:
+            return None
 
-        card = PlayerCard.objects.filter(owner=bot_player, in_battle_deck=True).first()
-        if card and empty_positions:
-            return {
-                'card': card,
-                'position': random.choice(empty_positions)
-            }
-        return None
+        # 2) Bot’s unused battle-deck cards
+        played_ids = {
+            m.card.id 
+            for m in MatchMove.objects.filter(match=match, player=bot_player)
+        }
+        available = list(
+            PlayerCard.objects
+                      .filter(owner=bot_player, in_battle_deck=True)
+                      .exclude(id__in=played_ids)
+        )
+        if not available:
+            return None
 
+        # 3) Pick random
+        return {
+            'position': random.choice(free_positions),
+            'card':     random.choice(available)
+        }
 
-# Now safe to load dictionary
-BOT_CLASSES = {
-    "random": RandomBot,
-    # "minmax": MinMaxBot,  # Uncomment if defined
-    # "qbot": QBot,
-}
+def load_bot(name):
+    if name.lower() == "random":
+        return RandomBot()
+    raise ValueError(f"Unknown bot strategy '{name}'")
+

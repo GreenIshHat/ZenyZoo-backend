@@ -1,71 +1,74 @@
-<!-- templates/game/match_list.html -->
 {% extends "base.html" %}
-{% load static %}
+{% block title %}Open Matches{% endblock %}
 
 {% block content %}
-<h1>Open Matches</h1>
+<nav class="page-nav">
+  <a href="{% url 'home' %}">Dashboard</a> |
+  <a href="{% url 'profile_view' %}">Profile</a> |
+  <a href="{% url 'match_list' %}">Matches</a> |
+  <a href="{% url 'start_match' %}">Create Match</a>
+</nav>
 
-<ul id="match-list">
-  <!-- Matches will be populated here -->
-</ul>
+<h2>Join an Open Match</h2>
 
-<button onclick="createMatch()">Create New Match</button>
-
-<button onclick="battleBot()">Battle Random Bot</button>
-
-<script>
-  async function battleBot() {
-    const res = await fetch('/game/battle-bot/', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ player_id: playerId })
-    });
-    const match = await res.json();
-    window.location.href = `/game/battle/${match.match_id}/`;
-  }
-</script>
-
-<script>
-  const playerId = {{ request.user.id }};
-
-  async function fetchMatches() {
-    const res = await fetch('/game/match/list-open/');
-    const matches = await res.json();
-    const list = document.getElementById('match-list');
-    list.innerHTML = '';
-
-    matches.forEach(match => {
-      const li = document.createElement('li');
-      li.textContent = `Match ${match.id} by ${match.player_one}`;
-      const joinBtn = document.createElement('button');
-      joinBtn.textContent = "Join";
-      joinBtn.onclick = () => joinMatch(match.id);
-      li.appendChild(joinBtn);
-      list.appendChild(li);
-    });
-  }
-
-  async function createMatch() {
-    const res = await fetch('/game/match/create/', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ player_id: playerId })
-    });
-    const match = await res.json();
-    window.location.href = `/game/battle/${match.match_id}/`;
-  }
-
-  async function joinMatch(matchId) {
-    const res = await fetch('/game/match/join/', {
-      method: 'POST',
-      headers: {'Content-Type': 'application/json'},
-      body: JSON.stringify({ match_id: matchId, player_id: playerId })
-    });
-    const match = await res.json();
-    window.location.href = `/game/battle/${match.match_id}/`;
-  }
-
-  fetchMatches();
-</script>
+{% if open_matches %}
+  <div class="deck not-battle" id="matches-row">
+    {% for match in open_matches %}
+      <div class="card match-card">
+        <div class="card-face">
+          <strong>Match #{{ match.id }}</strong><br>
+          Host: {{ match.player_one.user.username }}
+        </div>
+        {% if match.player_one == request.user.player %}
+          <!-- You’re the host -->
+          <a href="{% url 'start_bot_match' match.id %}" class="btn">
+            Play vs Bot
+          </a>
+        {% else %}
+          <!-- Someone else’s match -->
+          <button class="match-join-btn" data-id="{{ match.id }}">
+            Join
+          </button>
+        {% endif %}
+      </div>
+    {% endfor %}
+  </div>
+{% else %}
+  <p>No open matches. <a href="{% url 'start_match' %}">Create one</a>.</p>
+{% endif %}
 {% endblock %}
 
+{% block scripts %}
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+  const csrftoken = document.cookie
+    .split('; ')
+    .find(c => c.startsWith('csrftoken='))
+    ?.split('=')[1];
+  const playerId = {{ request.user.player.id }};
+
+  document.querySelectorAll('.match-join-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      fetch('{% url "join_match" %}', {
+        method: 'POST',
+        credentials: 'same-origin',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRFToken': csrftoken
+        },
+        body: JSON.stringify({
+          match_id: btn.dataset.id,
+          player_id: playerId
+        })
+      })
+      .then(r => r.ok ? r.json() : Promise.reject(r.status))
+      .then(data => {
+        if (data.error) return alert(data.error);
+        window.location = `/game/battle/${btn.dataset.id}/`;
+      })
+      .catch(e => console.error("join-match error:", e));
+    });
+  });
+});
+</script>
+{% endblock %}

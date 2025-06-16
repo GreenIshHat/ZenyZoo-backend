@@ -1,0 +1,24 @@
+{% extends "base.html" %}
+{% block content %}
+  <h2>Shop</h2>
+
+  {% if items %}
+    <ul>
+      {% for item in items %}
+        <li>
+          <img src="{{ item.card.image.url }}" alt="{{ item.card.name }}" width="80" />
+          <strong>{{ item.card.name }}</strong> — {{ item.price }} gold
+          <form method="post" action="{% url 'buy_card' %}">
+            {% csrf_token %}
+            <input type="hidden" name="player_id" value="{{ user.player.id }}">
+            <input type="hidden" name="card_id"   value="{{ item.card.id }}">
+            <button type="submit">Buy</button>
+          </form>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p>The shop is currently out of stock. Please check back later for new cards!</p>
+  {% endif %}
+
+{% endblock %}

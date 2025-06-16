@@ -38,7 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'core',
-	'game'
+    'game.apps.GameConfig'
 ]
 
 MIDDLEWARE = [
@@ -116,8 +116,13 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-STATIC_URL = 'static/'
-STATICFILES_DIRS = [ BASE_DIR / "static" ] 
+# Where `collectstatic` will dump all collected files
+STATIC_ROOT = BASE_DIR / "staticfiles"
+STATIC_URL  = "/static/"
+
+STATICFILES_DIRS = [
+    BASE_DIR / "game" / "static",
+]
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
@@ -131,7 +136,8 @@ MEDIA_ROOT = BASE_DIR / 'media'
 LOGIN_URL = '/game/login/'
 
 LOGIN_REDIRECT_URL = '/game/'
-LOGOUT_REDIRECT_URL = '/login/'
+LOGOUT_REDIRECT_URL = '/game/login/'
+
 
 
 
