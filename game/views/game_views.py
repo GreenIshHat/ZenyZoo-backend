@@ -1,5 +1,6 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
+from django.db.models import Q, Count
 
 from game.models import Player, PlayerCard, Match
 
@@ -20,15 +21,44 @@ def home_view(request):
 
 @login_required
 def profile_view(request):
-    """
-    Show all owned cards and current battle deck.
-    """
     player = request.user.player
-    all_cards = PlayerCard.objects.filter(owner=player)
-    battle_deck = all_cards.filter(in_battle_deck=True)
+
+    # deck & cards
+    all_cards     = PlayerCard.objects.filter(owner=player)
+    battle_deck   = all_cards.filter(in_battle_deck=True)
+
+    # core stats
+    total   = player.total_played()
+    wins    = player.total_wins()
+    draws   = player.total_draws()
+    losses  = player.total_losses()
+
+    # splits
+    human_played = player.human_matches().count()
+    bot_played   = player.bot_matches().count()
+
+    # head-to-head opponents
+    opponents = Player.objects.filter(
+        Q(matches_as_p1__player_two=player) |
+        Q(matches_as_p2__player_one=player),
+        is_bot=False
+    ).distinct().exclude(id=player.id)
+
+    h2h = {
+        opp.user.username: player.vs_opponent(opp)
+        for opp in opponents
+    }
+
     return render(request, 'game/profile.html', {
-        'all_cards': all_cards,
-        'battle_deck': battle_deck,
+        'all_cards':    all_cards,
+        'battle_deck':  battle_deck,
+        'stats': {
+            'total': total, 'wins': wins,
+            'draws': draws, 'losses': losses,
+            'human_played': human_played,
+            'bot_played': bot_played,
+        },
+        'h2h': h2h
     })
 
 @login_required

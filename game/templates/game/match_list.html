@@ -2,73 +2,24 @@
 {% block title %}Open Matches{% endblock %}
 
 {% block content %}
-<nav class="page-nav">
-  <a href="{% url 'home' %}">Dashboard</a> |
-  <a href="{% url 'profile_view' %}">Profile</a> |
-  <a href="{% url 'match_list' %}">Matches</a> |
-  <a href="{% url 'start_match' %}">Create Match</a>
-</nav>
 
 <h2>Join an Open Match</h2>
 
-{% if open_matches %}
-  <div class="deck not-battle" id="matches-row">
-    {% for match in open_matches %}
-      <div class="card match-card">
-        <div class="card-face">
-          <strong>Match #{{ match.id }}</strong><br>
-          Host: {{ match.player_one.user.username }}
-        </div>
-        {% if match.player_one == request.user.player %}
-          <!-- You’re the host -->
-          <a href="{% url 'start_bot_match' match.id %}" class="btn">
-            Play vs Bot
-          </a>
-        {% else %}
-          <!-- Someone else’s match -->
-          <button class="match-join-btn" data-id="{{ match.id }}">
-            Join
-          </button>
-        {% endif %}
-      </div>
-    {% endfor %}
-  </div>
-{% else %}
-  <p>No open matches. <a href="{% url 'start_match' %}">Create one</a>.</p>
-{% endif %}
+
+  {% if open_matches %}
+    <div class="deck not-battle" id="matches-row">
+      {% for match in open_matches %}
+        <a href="{% url 'battle_view' match.id %}" class="card match-card">
+          <div class="card-face" style="padding: 8px; text-align: center;">
+            <strong>Match #{{ match.id }}</strong><br>
+            Host: {{ match.player_one.user.username }}
+          </div>
+        </a>
+      {% endfor %}
+    </div>
+  {% else %}
+    <p>No open matches. <a href="{% url 'create_open_match' %}">Create one</a> now.</p>
+  {% endif %}
 {% endblock %}
 
-{% block scripts %}
-<script>
-document.addEventListener("DOMContentLoaded", () => {
-  const csrftoken = document.cookie
-    .split('; ')
-    .find(c => c.startsWith('csrftoken='))
-    ?.split('=')[1];
-  const playerId = {{ request.user.player.id }};
 
-  document.querySelectorAll('.match-join-btn').forEach(btn => {
-    btn.addEventListener('click', () => {
-      fetch('{% url "join_match" %}', {
-        method: 'POST',
-        credentials: 'same-origin',
-        headers: {
-          'Content-Type': 'application/json',
-          'X-CSRFToken': csrftoken
-        },
-        body: JSON.stringify({
-          match_id: btn.dataset.id,
-          player_id: playerId
-        })
-      })
-      .then(r => r.ok ? r.json() : Promise.reject(r.status))
-      .then(data => {
-        if (data.error) return alert(data.error);
-        window.location = `/game/battle/${btn.dataset.id}/`;
-      })
-      .catch(e => console.error("join-match error:", e));
-    });
-  });
-});
-</script>
-{% endblock %}

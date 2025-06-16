@@ -16,13 +16,13 @@ def match_list_view(request):
     })
 
 @login_required
-def join_match(request, match_id):
-    """
-    Fill player_two slot and go to battle page.
-    """
-    match = get_object_or_404(Match, id=match_id, player_two__isnull=True)
-    match.player_two = request.user.player
-    match.save()
+def join_match(request):
+    match_id  = request.POST.get("match_id")
+    player_id = request.POST.get("player_id")
+    match     = get_object_or_404(Match, id=match_id)
+    if match.player_two is None:
+        match.player_two = get_object_or_404(Player, id=player_id)
+        match.save()
     return redirect('battle_view', match_id=match.id)
 
 @login_required
@@ -60,3 +60,38 @@ def start_bot_match(request, match_id):
     match.save()
 
     return redirect('battle_view', match_id=match.id)
+
+
+@login_required
+def standings_view(request):
+    """
+    Renders the human leaderboard: total played, wins, draws, losses, win_rate.
+    """
+    # Only human players
+    players = Player.objects.filter(is_bot=False)
+
+    # Build a simple list of dicts with precomputed stats
+    table = []
+    for p in players:
+        played   = p.total_played()
+        wins     = p.total_wins()
+        draws    = p.total_draws()
+        losses   = p.total_losses()
+        # round to one decimal place if there were any games
+        win_rate = round((wins / played) * 100, 1) if played else None
+
+        table.append({
+            'username':  p.user.username,
+            'played':    played,
+            'wins':      wins,
+            'draws':     draws,
+            'losses':    losses,
+            'win_rate':  win_rate,
+        })
+
+    # Sort by wins descending, then by win_rate descending
+    table.sort(key=lambda row: (-row['wins'], -(row['win_rate'] or 0)))
+
+    return render(request, 'game/standings.html', {
+        'standings': table
+    })

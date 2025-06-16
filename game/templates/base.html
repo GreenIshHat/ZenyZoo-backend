@@ -4,18 +4,20 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8">
-  <title>{% block title %}Zenyzoo{% endblock %}</title>
+  <title>{% block title %}Zeny Zoo{% endblock %}</title>
 	{% load static %}
   <link rel="stylesheet" href="{% static 'game/style.css' %}">
   {% block extra_css %}{% endblock %}
 </head>
 <body>
   <header>
-    <h1>Zenyzoo</h1>
+    <h1>Zeny Zoo</h1>
     {% if user.is_authenticated %}
       <p>Welcome, {{ user.username }} | <a href="{% url 'logout' %}">Logout</a></p>
     {% endif %}
   </header>
+
+    {% include 'includes/navbar.html' %}
 
   <main>
     {% block content %}{% endblock %}

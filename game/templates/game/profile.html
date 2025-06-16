@@ -2,42 +2,73 @@
 {% block title %}{{ user.username }}'s Profile{% endblock %}
 
 {% block content %}
-  <nav class="page-nav">
-    <a href="{% url 'home' %}">Dashboard</a> |
-    <a href="{% url 'profile_view' %}">Profile</a> |
-    <a href="{% url 'choose_battle_deck' %}">Select Deck</a> |
-    <a href="{% url 'match_list' %}">Matches</a> |
-    <a href="{% url 'shop_view' %}">Shop</a>
-  </nav>
 
   <h2>{{ user.username }}'s Profile</h2>
 
+  <h3>Your Record</h3>
+  <ul>
+    <li>Total matches: {{ stats.total }}</li>
+    <li>Won: {{ stats.wins }}</li>
+    <li>Lost: {{ stats.losses }}</li>
+    <li>Draws: {{ stats.draws }}</li>
+    <li>vs Humans: {{ stats.human_played }}</li>
+    <li>vs Bots: {{ stats.bot_played }}</li>
+  </ul>
+
+  {% if h2h %}
+    <h4>Head-to-Head</h4>
+    <table>
+      <thead>
+        <tr>
+          <th>Opponent</th><th>Played</th><th>W</th><th>L</th><th>D</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for name, rec in h2h.items %}
+          <tr>
+            <td>{{ name }}</td>
+            <td>{{ rec.played }}</td>
+            <td>{{ rec.wins }}</td>
+            <td>{{ rec.losses }}</td>
+            <td>{{ rec.draws }}</td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+
   <h3>Battle Deck</h3>
-  <div class="deck">
-    {% for card in battle_deck %}
-      <div class="card" style="background-image: url('{{ card.card.image.url }}')" title="{{ card.card.name }}"></div>
+  <div class="deck-grid">
+    {% for pc in battle_deck %}
+      <div class="card">
+        <div class="card-face"
+             style="background-image: url('{{ pc.card.image.url }}');"
+             title="{{ pc.card.name }}"></div>
+        <span class="stat stat-top">{{ pc.card.strength_top }}</span>
+        <span class="stat stat-right">{{ pc.card.strength_right }}</span>
+        <span class="stat stat-bottom">{{ pc.card.strength_bottom }}</span>
+        <span class="stat stat-left">{{ pc.card.strength_left }}</span>
+      </div>
     {% empty %}
-      <p>You haven’t selected your deck yet.</p>
+      <p>You haven’t selected your deck yet. <a href="{% url 'choose_battle_deck' %}">Select Deck</a></p>
     {% endfor %}
   </div>
 
   <h3>Owned Cards</h3>
-  <div class="deck">
-    {% for card in all_cards %}
-      <div class="card" style="background-image: url('{{ card.card.image.url }}')" title="{{ card.card.name }}"></div>
+  <div class="deck-grid">
+    {% for pc in all_cards %}
+      <div class="card">
+        <div class="card-face"
+             style="background-image: url('{{ pc.card.image.url }}');"
+             title="{{ pc.card.name }}"></div>
+        <span class="stat stat-top">{{ pc.card.strength_top }}</span>
+        <span class="stat stat-right">{{ pc.card.strength_right }}</span>
+        <span class="stat stat-bottom">{{ pc.card.strength_bottom }}</span>
+        <span class="stat stat-left">{{ pc.card.strength_left }}</span>
+      </div>
     {% empty %}
-      <p>You have no cards.</p>
+      <p>You have no cards yet.</p>
     {% endfor %}
   </div>
 
-  <style>
-    .page-nav {
-      margin-bottom: 1rem;
-      font-size: .9rem;
-    }
-    .page-nav a {
-      text-decoration: none;
-      margin-right: .5rem;
-    }
-  </style>
 {% endblock %}

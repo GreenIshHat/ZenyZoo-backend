@@ -1,14 +1,11 @@
 {% extends "base.html" %}
-
 {% block title %}Select Your Battle Deck{% endblock %}
-
 {% block content %}
   <h2>Select 7 Cards for Your Battle Deck</h2>
 
   {% if owned_cards %}
     <form method="post" action="{% url 'choose_battle_deck' %}">
       {% csrf_token %}
-
       <div class="card-grid">
         {% for pc in owned_cards %}
           <label class="card-tile">
@@ -18,57 +15,26 @@
               value="{{ pc.id }}"
               {% if pc.in_battle_deck %}checked{% endif %}
             />
-            <div
-              class="card-art"
-              style="background-image: url('{{ pc.card.image.url }}');"
-              title="{{ pc.card.name }}"
-            ></div>
+            <div class="card">
+              <div class="card-face"
+                   style="background-image:url('{{ pc.card.image.url }}');"
+                   title="{{ pc.card.name }}">
+              </div>
+              <span class="stat stat-top">{{ pc.card.strength_top }}</span>
+              <span class="stat stat-right">{{ pc.card.strength_right }}</span>
+              <span class="stat stat-bottom">{{ pc.card.strength_bottom }}</span>
+              <span class="stat stat-left">{{ pc.card.strength_left }}</span>
+            </div>
             <div class="card-info">
-              <strong>{{ pc.card.name }}</strong><br/>
-              T:{{ pc.card.strength_top }}
-              R:{{ pc.card.strength_right }}
-              B:{{ pc.card.strength_bottom }}
-              L:{{ pc.card.strength_left }}
+              <strong>{{ pc.card.name }}</strong>
             </div>
           </label>
         {% endfor %}
       </div>
-
       <p><em>You must select exactly 7 cards.</em></p>
       <button type="submit">Save Deck</button>
     </form>
   {% else %}
-    <p>You have no cards yet. Visit the <a href="{% url 'shop_view' %}">Shop</a> to acquire more.</p>
+    <p>You have no cards yet. Visit the <a href="{% url 'view_shop' %}">Shop</a>.</p>
   {% endif %}
-
-  <style>
-    .card-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
-      gap: 1rem;
-    }
-    .card-tile {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      padding: .5rem;
-      background: #fafafa;
-    }
-    .card-tile input {
-      margin-bottom: .25rem;
-    }
-    .card-art {
-      width: 100px;
-      height: 140px;
-      background-size: cover;
-      background-position: center;
-      margin-bottom: .5rem;
-    }
-    .card-info {
-      font-size: .85rem;
-      text-align: center;
-    }
-  </style>
 {% endblock %}

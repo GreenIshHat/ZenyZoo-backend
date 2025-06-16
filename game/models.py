@@ -1,6 +1,6 @@
 from django.db import models
+from django.db.models import Q, Count
 from django.contrib.auth.models import User
-
 
 
 class Player(models.Model):
@@ -16,6 +16,45 @@ class Player(models.Model):
         choices=[('random', 'Random')],
         default='random'
     )
+
+    def matches(self):
+        """All matches this player participated in."""
+        return Match.objects.filter(Q(player_one=self) | Q(player_two=self))
+
+    def total_played(self):
+        """Total completed matches (winner is set)."""
+        return self.matches().filter(is_active=False).count()
+
+    def total_wins(self):
+        return self.matches().filter(is_active=False, winner=self).count()
+
+    def total_losses(self):
+        return self.total_played() - self.total_wins() - self.total_draws()
+
+    def total_draws(self):
+        return self.matches().filter(is_active=False, winner__isnull=True).count()
+
+    def vs_opponent(self, other):
+        """Head-to-head stats against *other* Player."""
+        qs = self.matches().filter(Q(player_one=other) | Q(player_two=other), is_active=False)
+        return {
+            'played': qs.count(),
+            'wins':   qs.filter(winner=self).count(),
+            'losses': qs.filter(winner=other).count(),
+            'draws':  qs.filter(winner__isnull=True).count()
+        }
+
+    def human_matches(self):
+        return self.matches().filter(
+            Q(player_one__is_bot=False) & Q(player_two__is_bot=False),
+            is_active=False
+        )
+
+    def bot_matches(self):
+        return self.matches().filter(
+            Q(player_one__is_bot=True) | Q(player_two__is_bot=True),
+            is_active=False
+        )
 
 
 class Card(models.Model):

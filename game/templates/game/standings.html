@@ -1,0 +1,63 @@
+{% extends "base.html" %}
+{% block title %}Standings{% endblock %}
+
+{% block content %}
+
+  <h2>🏆 Leaderboard</h2>
+
+  {% if standings %}
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Player</th>
+          <th>Played</th>
+          <th>Wins</th>
+          <th>Draws</th>
+          <th>Losses</th>
+          <th>Win %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in standings %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ row.username }}</td>
+            <td>{{ row.played }}</td>
+            <td>{{ row.wins }}</td>
+            <td>{{ row.draws }}</td>
+            <td>{{ row.losses }}</td>
+            <td>
+              {% if row.win_rate is not None %}
+                {{ row.win_rate }}%
+              {% else %}
+                N/A
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No completed matches yet.</p>
+  {% endif %}
+{% endblock %}
+
+{% block extra_css %}
+<style>
+  .standings-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-top: 1rem;
+  }
+  .standings-table th,
+  .standings-table td {
+    border: 1px solid #ccc;
+    padding: .5rem;
+    text-align: center;
+  }
+  .standings-table th {
+    background: #f0f0f0;
+  }
+</style>
+{% endblock %}

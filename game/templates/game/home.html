@@ -1,11 +1,5 @@
 {% extends "base.html" %}
 {% block content %}
   <h2>Welcome to ZenyZoo, {{ user.username }}!</h2>
-  <ul>
-    <li><a href="{% url 'match_list' %}">Join a Match</a></li>
-    <li><a href="{% url 'start_match' %}">Create Match</a></li>
-    <li><a href="{% url 'shop_view' %}">Shop</a></li>
-    <li><a href="{% url 'profile_view' %}">Your Deck</a></li>
-    <li><a href="{% url 'logout' %}">Logout</a></li>
-  </ul>
+
 {% endblock %}

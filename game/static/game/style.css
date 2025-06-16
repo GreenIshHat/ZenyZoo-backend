@@ -1,37 +1,54 @@
-/* ——— Battle wrapper: 80% board, 20% deck ——— */
+/* ===================== Base Styles ===================== */
+
+/* ——— Site Navigation ——— */
+.site-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
+  padding: 0.5rem 0;
+  border-bottom: 1px solid #e0e0e0;
+  font-size: 0.9rem;
+  justify-content: center;
+}
+.site-nav a {
+  color: #333;
+  text-decoration: none;
+  padding: 0.25rem;
+  transition: color 0.2s, border-bottom 0.2s;
+}
+.site-nav a:hover {
+  color: #007bff;
+}
+.site-nav a.active {
+  color: #007bff;
+  border-bottom: 2px solid #007bff;
+}
+
+/* ——— Battle Wrapper (80% board, 20% deck) ——— */
 #battle-wrapper {
   display: flex;
-  width: 100%;
   height: 80vh;
   gap: 16px;
   margin-bottom: 16px;
 }
-
-/* ——— Board (80%) ——— */
 #game-board {
-  flex: 4;                /* ~80% of wrapper width */
+  flex: 4;
   display: grid;
   grid-template-columns: repeat(3, 1fr);
-  grid-template-rows:    repeat(3, 1fr);  /* 3 equal-height rows */
+  grid-template-rows: repeat(3, 1fr);
   gap: 16px;
   background: #e2e2e2;
   padding: 8px;
-  /* fill the wrapper’s height */
-  height: 100%;
 }
-
-
-/* ——— Deck panel (20%) ——— */
 #player-panel {
   flex: 1;
   display: flex;
   flex-direction: column;
 }
-
 #player-deck {
   flex: 1;
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 12px;
   overflow-y: auto;
   padding: 8px;
@@ -41,119 +58,53 @@
   margin-top: 0.5rem;
 }
 
-/* ——— Cell ——— */
+/* ——— Cell & Card ——— */
 .cell {
   position: relative;
   width: 100%;
   height: 100%;
-  border: 1px solid #999;
   background: #f0f0f0;
+  border: 1px solid #999;
 }
-
-/* ——— Card thumbnail ——— */
-.card {
+.card, .cell .card.in-cell {
   position: relative;
   width: 100%;
   height: 100%;
-  margin: 0;
   border: 1px solid #ccc;
   border-radius: 4px;
   overflow: hidden;
-  cursor: pointer;
 }
-
-/* ——— Card face image ——— */
 .card-face {
   width: 100%;
   height: 100%;
-  background-size: cover;
-  background-position: center;
+  background-size: cover !important;
+  background-position: center !important;
 }
-
-/* ——— Edge stats ——— */
 .stat {
   position: absolute;
   font-size: .75rem;
   color: #fff;
   text-shadow: 0 0 2px #000;
-  pointer-events: none;
   background: rgba(0,0,0,0.6);
   padding: 2px 4px;
   border-radius: 3px;
   z-index: 2;
 }
 .stat-top    { top: 2px;    left: 50%; transform: translateX(-50%); }
+.stat-right  { right:2px;   top: 50%; transform: translateY(-50%); }
 .stat-bottom { bottom:2px;  left: 50%; transform: translateX(-50%); }
 .stat-left   { left:2px;    top: 50%; transform: translateY(-50%); }
-.stat-right  { right:2px;   top: 50%; transform: translateY(-50%); }
-
-/* ——— Used cards greyed out ——— */
 .card.used {
   opacity: 0.4;
   filter: grayscale(100%);
   cursor: not-allowed;
 }
-
-/* ——— Owner highlights ——— */
 .card.in-cell.my-card {
   box-shadow: 0 0 0 5px rgba(0,128,255,0.8);
 }
 .card.in-cell.opponent-card {
   box-shadow: 0 0 0 5px rgba(255,64,64,0.8);
 }
-
-#player-panel {
-  flex: 1;                /* ~20% of wrapper width */
-  display: flex;
-  flex-direction: column;
-}
-
-/* No height override here — it will match the wrapper’s height */
-#player-deck {
-  flex: 1;
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 12px;
-  overflow-y: auto;
-  padding: 8px;
-  background: #fafafa;
-  border: 1px solid #ccc;
-  border-radius: 4px;
-  margin-top: .5rem;
-}
-
-
-/* Ensure your card‐face covers and scales */
-.card-face {
-  background-size: cover !important;
-  background-position: center !important;
-  background-repeat: no-repeat !important;
-}
-
-/* Visual flip: swap owner border */
-.cell.flipped > .card.in-cell.my-card {
-  /* a card you own got flipped to opponent */
-  box-shadow: 0 0 0 5px rgba(255,64,64,0.8) !important;
-  /* switch its class in JS to opponent-card too */
-}
-.cell.flipped > .card.in-cell.opponent-card {
-  /* a bot card flipped to you */
-  box-shadow: 0 0 0 5px rgba(0,128,255,0.8) !important;
-}
-
-/* Disable further clicks when game is over */
-.battle-over .cell {
-  pointer-events: none;
-  opacity: 0.8;
-}
-
-.card-face img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-}
-
-
 .cell.flipped {
   animation: flip-flash 0.4s ease-in-out;
 }
@@ -161,11 +112,12 @@
   0%   { background-color: #fffae6; }
   100% { background-color: #f0f0f0; }
 }
+.battle-over .cell {
+  pointer-events: none;
+  opacity: 0.8;
+}
 
-
-/* ——— Profile‐page deck thumbnails ——— */
-/* ——— Horizontal profile‐page decks ——— */
-/* Target any .deck that isn’t the battle‐page’s #player-deck */
+/* ——— Profile & Match List Thumbnails ——— */
 .deck:not(#player-deck) {
   display: flex !important;
   flex-wrap: nowrap;
@@ -173,15 +125,133 @@
   padding: 8px 0;
   gap: 8px;
 }
-
-/* Each thumbnail in that row */
 .deck:not(#player-deck) .card {
-  flex: 0 0 auto;          /* don’t shrink or grow */
-  width: 80px !important;  /* fixed thumb size */
+  flex: 0 0 auto;
+  width: 80px !important;
   height: 100px !important;
-  background-size: cover;
-  background-position: center;
-  background-repeat: no-repeat;
   margin: 0 !important;
 }
 
+/* ===================== Deck-Picker & Profile Grid ===================== */
+.card-grid,
+.deck-grid {
+  display: grid;
+  gap: 1rem;
+  /* Desktop: 4 equal columns */
+  grid-template-columns: repeat(4, 1fr);
+  width: 100%;
+  margin-bottom: 1rem;
+}
+.card-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  background: #fafafa;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  padding: .5rem;
+  overflow: visible;
+  align-items: stretch;
+}
+.card-tile input {
+  margin-bottom: .25rem;
+}
+.card-info {
+  font-size: .85rem;
+  text-align: center;
+}
+
+/* Force proper aspect and min-size */
+.card-tile .card {
+  aspect-ratio: 4/5;
+  width: 100%;
+  height: auto;
+  min-height: 160px;
+}
+.card-tile .card-face {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+/* ===================== Responsive Breakpoints ===================== */
+
+/* Very large screens: allow larger min-width */
+@media (min-width: 1400px) {
+  .card-grid,
+  .deck-grid {
+    grid-template-columns: repeat(4, minmax(180px, 1fr));
+  }
+}
+
+/* Tablets (≤1024px): 3 columns */
+@media (max-width: 1024px) {
+  .card-grid,
+  .deck-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+/* Medium (≤768px): 2 columns */
+@media (max-width: 768px) {
+  .card-grid,
+  .deck-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  #battle-wrapper {
+    flex-direction: column;
+    height: auto;
+  }
+  #game-board {
+    height: 50vh;
+    gap: 8px;
+  }
+  #player-panel {
+    margin-top: 1rem;
+  }
+}
+
+/* Small phones (≤480px): 1 column */
+@media (max-width: 480px) {
+  .card-grid,
+  .deck-grid {
+    grid-template-columns: 1fr;
+  }
+  .site-nav {
+    font-size: 0.8rem;
+    gap: 0.5rem;
+  }
+  .site-nav a {
+    flex: 1 1 45%;
+    text-align: center;
+  }
+}
+
+
+/* ——— Fix collapsed images in deck-picker & profile grids ——— */
+/* Target cards inside .card-grid (picker) and .deck-grid (profile) */
+.card-grid .card,
+.deck-grid .card {
+  /* Remove any forced 100% height so aspect‐ratio can work */
+  height: auto !important;
+  /* Enforce a 4:5 ratio (you can tweak the min-height as desired) */
+  aspect-ratio: 4 / 5 !important;
+  min-height: 150px;
+  width: 100%;
+}
+
+/* Ensure the face fills its container */
+.card-grid .card-face,
+.deck-grid .card-face {
+  width: 100% !important;
+  height: 100% !important;
+  object-fit: cover;
+}
+
+/* If you want bigger thumbs on mobile, bump the min-height here */
+@media (max-width: 600px) {
+  .card-grid .card,
+  .deck-grid .card {
+    min-height: 180px;
+  }
+}

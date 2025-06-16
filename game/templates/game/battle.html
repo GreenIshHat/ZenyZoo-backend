@@ -4,13 +4,6 @@
 {% block title %}Battle Arena{% endblock %}
 
 {% block content %}
-<nav id="battle-menu" style="margin-bottom:1rem;">
-  <a href="{% url 'home' %}">🏠 Dashboard</a> |
-  <a href="{% url 'match_list' %}">🔗 Matches</a> |
-  <a href="{% url 'profile_view' %}">👤 Profile</a> |
-  <button type="button" onclick="history.back()">← Back</button>
-</nav>
-
 
 <h1>Zenyzoo: Match #{{ match.id }}</h1>
 
