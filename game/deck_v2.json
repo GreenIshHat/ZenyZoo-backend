@@ -124,7 +124,17 @@
 	  "strength_right": 6,
 	  "image": "Diabolical_Millipede_Card.webp",
 	  "lore": "Too many legs to block. Predict its path, and it will coil around you."
-	}
+	},
+    {
+        "name": "Greyfox Whisperwind",
+        "strength_top":    9,
+        "strength_right":  9,
+        "strength_bottom": 8,
+        "strength_left":   9,
+        "image": "Greyfox_Whisperwind.png",
+        "lore": "Greyfox Whisperwind tip-toes through moonlit meadows, juggling fireflies like glowing marbles.  With a cheeky wink and a swish of its fluffy tail, it outsmarts every would-be hunter—then taps them on the nose and vanishes in a puff of stardust!"
+    }
+
 
 
 ]

@@ -1,24 +1,73 @@
 {% extends "base.html" %}
+
+{% block title %}Shop{% endblock %}
+
 {% block content %}
   <h2>Shop</h2>
+  <div class="card-grid">
+    {% for item in shop_items %}
+      <label class="card-tile">
+        <div class="card">
+          <div class="card-face"
+               style="background-image:url('{{ item.card.image.url }}');"
+               title="{{ item.card.name }}">
+          </div>
+          <span class="stat stat-top">{{ item.card.strength_top }}</span>
+          <span class="stat stat-right">{{ item.card.strength_right }}</span>
+          <span class="stat stat-bottom">{{ item.card.strength_bottom }}</span>
+          <span class="stat stat-left">{{ item.card.strength_left }}</span>
+        </div>
+        <div class="card-info">
+          <strong>{{ item.card.name }}</strong><br/>
+          Price: {{ item.price }} Zenys<br/>
+          <button type="button" class="buy-btn" data-card-id="{{ item.card.id }}">
+            Buy
+          </button>
+        </div>
+      </label>
+    {% empty %}
+      <p>The shop is empty right now.</p>
+    {% endfor %}
+  </div>
+{% endblock %}
 
-  {% if items %}
-    <ul>
-      {% for item in items %}
-        <li>
-          <img src="{{ item.card.image.url }}" alt="{{ item.card.name }}" width="80" />
-          <strong>{{ item.card.name }}</strong> — {{ item.price }} gold
-          <form method="post" action="{% url 'buy_card' %}">
-            {% csrf_token %}
-            <input type="hidden" name="player_id" value="{{ user.player.id }}">
-            <input type="hidden" name="card_id"   value="{{ item.card.id }}">
-            <button type="submit">Buy</button>
-          </form>
-        </li>
-      {% endfor %}
-    </ul>
-  {% else %}
-    <p>The shop is currently out of stock. Please check back later for new cards!</p>
-  {% endif %}
+{% block scripts %}
+  <script>
+    // helper to read csrftoken cookie
+    function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+        document.cookie.split(';').forEach(c => {
+          c = c.trim();
+          if (c.startsWith(name + '=')) {
+            cookieValue = decodeURIComponent(c.slice(name.length + 1));
+          }
+        });
+      }
+      return cookieValue;
+    }
 
+    document.querySelectorAll('.buy-btn').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        const id = btn.dataset.cardId;
+        fetch("{% url 'buy_card' %}", {
+          method: 'POST',
+          credentials: 'same-origin',
+          headers: {
+            "X-CSRFToken": getCookie('csrftoken'),
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({card_id: id})
+        })
+        .then(r => r.json())
+        .then(json => {
+          if (json.error) return alert(json.error);
+          alert(`Purchased! New balance: ${json.new_credits} Zenys`);
+          // update shown balance in navbar
+          document.querySelector('.credits').textContent = `Zenys: ${json.new_credits}`;
+        })
+        .catch(err => console.error("Shop purchase error:", err));
+      });
+    });
+  </script>
 {% endblock %}

@@ -2,7 +2,7 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Count
 
-from game.models import Player, PlayerCard, Match
+from game.models import Player, PlayerCard, Match, ShopCard
 
 @login_required
 def home_view(request):
@@ -86,6 +86,13 @@ def battle_view(request, match_id):
     The JS-driven battle board.
     """
     match = get_object_or_404(Match, id=match_id)
+    player = get_object_or_404(Player, user=request.user)
+
+    # If slot 2 is open and this user is not the host, auto-join
+    if match.player_two is None and player != match.player_one:
+        match.player_two = player
+        match.save()
+
     return render(request, 'game/battle.html', {
         'match': match,
         # For backwards compatibility you can still expose match_id:
@@ -94,5 +101,9 @@ def battle_view(request, match_id):
 
 @login_required
 def shop_view(request):
-    items = ShopCard.objects.filter(is_active=True).select_related('card')
-    return render(request, 'game/shop.html', {'items': items})
+    # grab all active shop entries, including card info
+    shop_items = ShopCard.objects.filter(is_active=True).select_related('card')
+    return render(request, 'game/shop.html', {
+        'shop_items': shop_items,
+        'credits':    request.user.player.credits,
+    })

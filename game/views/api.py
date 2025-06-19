@@ -127,24 +127,25 @@ def join_match(request):
 
 
 
+
 @api_view(['GET'])
 @permission_classes([IsAuthenticated])
 def get_match_state(request, match_id):
     match = get_object_or_404(Match, id=match_id)
     moves = MatchMove.objects.filter(match=match)
 
-    # Build board array as before…
+    # Build the board array
     board = [
         {
-            "position": m.position,
-            "player_id": m.player.id,
+            "position":       m.position,
+            "player_id":      m.player.id,
             "player_card_id": m.card.id,
-            "card_name": m.card.card.name,
-            "image": request.build_absolute_uri(m.card.card.image.url),
-            "card_top": m.card.card.strength_top,
-            "card_right": m.card.card.strength_right,
-            "card_bottom": m.card.card.strength_bottom,
-            "card_left": m.card.card.strength_left,
+            "card_name":      m.card.card.name,
+            "image":          request.build_absolute_uri(m.card.card.image.url),
+            "card_top":       m.card.card.strength_top,
+            "card_right":     m.card.card.strength_right,
+            "card_bottom":    m.card.card.strength_bottom,
+            "card_left":      m.card.card.strength_left,
         }
         for m in moves.order_by('timestamp')
     ]
@@ -156,18 +157,18 @@ def get_match_state(request, match_id):
     p2_score = moves.filter(player=p2).count()
 
     return Response({
-        "match_id": match.id,
-        "is_active": match.is_active,
-        "current_turn_id": match.current_turn.id if match.current_turn else None,
+        "match_id":          match.id,
+        "is_active":         match.is_active,
+        "current_turn_id":   match.current_turn.id   if match.current_turn else None,
         "current_turn_name": match.current_turn.user.username if match.current_turn else None,
-        "player_one": p1.user.username,
-        "player_two": p2.user.username,
+        "player_one":        p1.user.username,
+        "player_two":        p2.user.username if p2 else None,
         "scores": {
             p1.user.username: p1_score,
             p2.user.username: p2_score
         },
-        "winner": match.winner.user.username if match.winner else None,
-        "board": board
+        "winner":            match.winner.user.username if match.winner else None,
+        "board":             board
     })
 
 
@@ -384,7 +385,26 @@ def view_shop(request):
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def buy_card(request):
-    player = get_object_or_404(Player, id=request.data.get("player_id"))
-    item = get_object_or_404(ShopCard, card__id=request.data.get("card_id"), is_active=True)
-    PlayerCard.objects.create(owner=player, card=item.card)
-    return Response({"message": "Purchased"})
+    player = request.user.player
+    card_id = request.data.get("card_id")
+
+    try:
+        shop_item = ShopCard.objects.get(card__id=card_id, is_active=True)
+    except ShopCard.DoesNotExist:
+        return Response({"error": "Card not available"}, status=status.HTTP_404_NOT_FOUND)
+
+    price = shop_item.price
+    if player.credits < price:
+        return Response({"error": "Insufficient Zenys"}, status=status.HTTP_400_BAD_REQUEST)
+
+    # Deduct price
+    player.credits -= price
+    player.save()
+
+    # Grant the card
+    PlayerCard.objects.create(owner=player, card=shop_item.card, acquired_from="shop")
+
+    return Response({
+        "message": "Card purchased!",
+        "new_credits": player.credits
+    })

@@ -14,7 +14,10 @@ class Command(BaseCommand):
 
         for player in Player.objects.all():
             created = 0
-            for card in cards:
+
+            # Only take the first 10 entries from the JSON
+            starter_entries = cards[:10]
+            for card in starter_entries:
                 pc, was_new = PlayerCard.objects.get_or_create(owner=player, card=card)
                 if was_new:
                     # Optionally, mark the first 7 as in_battle_deck:

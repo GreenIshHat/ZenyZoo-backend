@@ -19,8 +19,11 @@ def give_initial_deck(sender, instance, created, **kwargs):
         return
 
     # Seed all cards as owned
-    all_cards = list(Card.objects.all())
-    for idx, card in enumerate(all_cards):
+    # all_cards = list(Card.objects.all())
+    # starter pack
+    starter = Card.objects.order_by('id')[:10]
+    
+    for idx, card in enumerate(starter):
         pc, _ = PlayerCard.objects.get_or_create(owner=instance, card=card)
         # Mark the first 7 as in-battle-deck by default
         if idx < 7:

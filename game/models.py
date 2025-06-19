@@ -11,11 +11,14 @@ class Player(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_bot = models.BooleanField(default=False)
 
+    credits = models.PositiveIntegerField(default=1000)
+    
     bot_strategy = models.CharField(
         max_length=32, 
         choices=[('random', 'Random')],
         default='random'
     )
+
 
     def matches(self):
         """All matches this player participated in."""
@@ -65,6 +68,8 @@ class Card(models.Model):
     strength_left = models.IntegerField()
     strength_right = models.IntegerField()
     lore = models.TextField(blank=True)
+
+    price = models.PositiveIntegerField(default=100)
 
     def __str__(self):
         return self.name

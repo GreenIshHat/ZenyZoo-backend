@@ -2,6 +2,8 @@
 
 console.log("🧩 battle script is running");
 let gameOver = false;
+// keep track of which positions we’ve already rendered
+const seenMoves = new Set();
 
 function getCSRFToken() {
   const name = "csrftoken=";
@@ -107,12 +109,19 @@ function loadDeck() {
     .catch(e => console.error("loadDeck error:", e));
 }
 
-// static/game/script.js
 /**
- * Update scores, detect end-of-game, set the info bar, and kick off
- * the bot if it’s their turn.
+ * Update scores, detect end-of-game, set the info bar, kick off
+ * the bot if it’s their turn — AND apply any flips that just happened.
  */
 function handlePostMove(data) {
+  // 0) Apply flips if present (human or bot)
+  if (Array.isArray(data.flips)) {
+    applyFlips(data.flips);
+  }
+  if (Array.isArray(data.bot_flips)) {
+    applyFlips(data.bot_flips);
+  }
+
   // 1) Update scores
   if (data.scores) updateScores(data.scores);
 
@@ -125,7 +134,7 @@ function handlePostMove(data) {
     banner.style.display = "block";
 
     // hide the turn line
-    document.getElementById("info-bar").style.display = "none";
+    //document.getElementById("info-bar").style.display = "none";
 
     // lock the board visually
     document.getElementById("battle-wrapper")
@@ -139,10 +148,10 @@ function handlePostMove(data) {
   infoBarEl.style.display = "block";
 
   // 4) Set current turn & label
-  currentTurn = data.next_turn_id;
+  currentTurn = data.current_turn_id;
   const turnText = (currentTurn === playerId)
     ? `Your turn, ${yourName}`
-    : `${opponentName}'s turn`;
+    : `${data.current_turn_name}'s turn`;
   document.getElementById("player-turn").textContent = turnText;
 
   // 5) Auto‐trigger bot if needed
@@ -157,34 +166,56 @@ function handlePostMove(data) {
  */
 function loadInitialState() {
   // 1) Rebuild the empty 3×3 grid
-  loadBoard();
+  // loadBoard();
 
   // 2) Fetch the latest match state
   fetch(matchStatusApi, { credentials: "same-origin" })
     .then(r => r.ok ? r.json() : Promise.reject(r.status))
     .then(data => {
-      // 3) Paint each move into its pre‐built cell
-      data.board.forEach(move => {
-        const cell = cellMap[move.position];
-        // clear any previous card
-        cell.innerHTML = "";
 
-        const cd = {
-          player_card_id: move.player_card_id,
-          card_name:      move.card_name,
-          image:          move.image,
-          card_top:       move.card_top,
-          card_right:     move.card_right,
-          card_bottom:    move.card_bottom,
-          card_left:      move.card_left
-        };
-        const el = makeCard(cd);
-        el.classList.add(
-          "in-cell",
-          move.player_id === playerId ? "my-card" : "opponent-card"
-        );
-        cell.appendChild(el);
+      // 2) Add only new moves
+      data.board.forEach(m=>{
+        if (!seenMoves.has(m.position)) {
+          seenMoves.add(m.position);
+          const cell = cellMap[m.position];
+          const cd = {
+            player_card_id: m.player_card_id,
+            card_name:      m.card_name,
+            image:          m.image,
+            card_top:       m.card_top,
+            card_right:     m.card_right,
+            card_bottom:    m.card_bottom,
+            card_left:      m.card_left
+          };
+          const ownerClass = (m.player_id===playerId)?'my-card':'opponent-card';
+          const el = makeCard(cd);
+          el.classList.add("in-cell", ownerClass, "fade-in");
+          cell.appendChild(el);
+        }
       });
+
+      // // 3) Paint each move into its pre‐built cell
+      // data.board.forEach(move => {
+      //   const cell = cellMap[move.position];
+      //   // clear any previous card
+      //   cell.innerHTML = "";
+
+      //   const cd = {
+      //     player_card_id: move.player_card_id,
+      //     card_name:      move.card_name,
+      //     image:          move.image,
+      //     card_top:       move.card_top,
+      //     card_right:     move.card_right,
+      //     card_bottom:    move.card_bottom,
+      //     card_left:      move.card_left
+      //   };
+      //   const el = makeCard(cd);
+      //   el.classList.add(
+      //     "in-cell",
+      //     move.player_id === playerId ? "my-card" : "opponent-card"
+      //   );
+      //   cell.appendChild(el);
+      // });
 
       // 4) Mark used deck tiles
       Object.values(cardMap).forEach(el => {
@@ -196,8 +227,8 @@ function loadInitialState() {
 
       // 5) Update scores, turn, and possibly trigger bot
       handlePostMove({
-        next_turn_id:   data.current_turn_id,
-        next_turn_name: data.current_turn_name,
+        current_turn_id:   data.current_turn_id,
+        current_turn_name	: data.current_turn_name,
         game_over:      !data.is_active,
         winner:         data.winner,
         scores:         data.scores
@@ -272,12 +303,15 @@ function attemptMove(pos) {
         .then(data => {
           currentTurn = data.current_turn_id;
           infoBar.textContent = `Current turn: ${data.current_turn_name}`;
+          loadInitialState()
+
         })
         .catch(err => console.warn("pollTurn error:", err));
-    }, 3000);
+    }, 5000);
   }
 
-  function triggerBotPlay() {
+  
+function triggerBotPlay() {
   fetch(battleBotApi, {
     method: "POST",
     credentials: "same-origin",
@@ -288,9 +322,24 @@ function attemptMove(pos) {
     body: JSON.stringify({ match_id: matchId })
   })
   .then(r => r.ok ? r.json() : Promise.reject(r.status))
-  .then(() => {
-    // small pause so user sees their move before bot appears
-    setTimeout(loadInitialState, 777);
+  .then(data => {
+    // 1) Paint the bot’s new card if present
+    if (data.bot_move) {
+      const bm = data.bot_move;
+      const el = makeCard(bm);
+      // apply owner class
+      el.classList.add(
+        "in-cell",
+        bm.player_id === playerId ? "my-card" : "opponent-card"
+      );
+      cellMap[bm.position].appendChild(el);
+      // grey out the used tile in your deck panel
+      const tile = cardMap[bm.player_card_id];
+      if (tile) tile.classList.add("used");
+    }
+
+    // 2) Now hand off flips / scores / turn logic
+    handlePostMove(data);
   })
   .catch(err => console.error("triggerBotPlay error:", err));
 }

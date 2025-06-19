@@ -80,25 +80,96 @@
   background-size: cover !important;
   background-position: center !important;
 }
-.stat {
-  position: absolute;
-  font-size: .75rem;
-  color: #fff;
-  text-shadow: 0 0 2px #000;
-  background: rgba(0,0,0,0.6);
-  padding: 2px 4px;
-  border-radius: 3px;
-  z-index: 2;
-}
-.stat-top    { top: 2px;    left: 50%; transform: translateX(-50%); }
-.stat-right  { right:2px;   top: 50%; transform: translateY(-50%); }
-.stat-bottom { bottom:2px;  left: 50%; transform: translateX(-50%); }
-.stat-left   { left:2px;    top: 50%; transform: translateY(-50%); }
+
 .card.used {
   opacity: 0.4;
   filter: grayscale(100%);
   cursor: not-allowed;
 }
+
+
+/* ——— Circular Stat Badges ——— */
+.stat {
+  position: absolute;
+  width: 28px;               /* badge diameter */
+  height: 28px;
+  border-radius: 50%;        /* make it a circle */
+  display: flex;             /* center number */
+  align-items: center;
+  justify-content: center;
+  font-size: 0.75rem;
+  font-weight: bold;
+  color: #fff;               /* white text */
+  text-shadow: none;
+  box-shadow: 0 0 2px rgba(0,0,0,0.5);
+  pointer-events: none;
+}
+
+/* Position & colors per edge */
+.stat-top {
+  top: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #007bff;       /* blue */
+}
+
+.stat-right {
+  top: 50%;
+  right: 4px;
+  transform: translateY(-50%);
+  background: #dc3545;       /* red */
+}
+
+.stat-bottom {
+  bottom: 4px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: #28a745;       /* green */
+}
+
+.stat-left {
+  top: 50%;
+  left: 4px;
+  transform: translateY(-50%);
+  background: #ffc107;       /* yellow */
+}
+
+/* ─── Override badge colors by owner ─── */
+.card.in-cell.my-card .stat {
+  background-color: #007bff !important;   /* your primary blue */
+}
+
+.card.in-cell.opponent-card .stat {
+  background-color: #dc3545 !important;   /* a vivid red */
+}
+
+/* ─── Tighter edge offsets ─── */
+/* bring each badge in by 2px instead of the default 4px */
+.stat-top {
+  top: 2px;
+}
+.stat-right {
+  right: 2px;
+}
+.stat-bottom {
+  bottom: 2px;
+}
+.stat-left {
+  left: 2px;
+}
+
+/* ensure the centering transform still applies */
+.stat-top,
+.stat-bottom {
+  left: 50%;
+  transform: translateX(-50%);
+}
+.stat-left,
+.stat-right {
+  top: 50%;
+  transform: translateY(-50%);
+}
+
 .card.in-cell.my-card {
   box-shadow: 0 0 0 5px rgba(0,128,255,0.8);
 }
@@ -255,3 +326,30 @@
     min-height: 180px;
   }
 }
+
+
+.credits {
+  margin-left: auto;
+  font-weight: bold;
+  padding: 0.25rem;
+}
+.logout-btn {
+  background: none;
+  border: none;
+  color: #007bff;
+  cursor: pointer;
+  font-size: 0.9rem;
+  margin-left: 1rem;
+}
+
+
+
+/* fade‐in for newly placed cards */
+.fade-in {
+  animation: fadeIn 0.4s ease-out;
+}
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.8); }
+  to   { opacity: 1; transform: scale(1); }
+}
+

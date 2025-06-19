@@ -1,26 +1,37 @@
-<nav class="site-nav">
-  <a href="{% url 'home' %}"
-     class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
-    Dashboard
-  </a>
-  <a href="{% url 'profile_view' %}"
-     class="{% if request.resolver_match.url_name == 'profile_view' %}active{% endif %}">
-    Profile
-  </a>
-  <a href="{% url 'match_list' %}"
-     class="{% if request.resolver_match.url_name == 'match_list' %}active{% endif %}">
-    Matches
-  </a>
-  <a href="{% url 'start_match' %}"
-     class="{% if request.resolver_match.url_name == 'start_match' %}active{% endif %}">
-    Create Match
-  </a>
-  <a href="{% url 'choose_battle_deck' %}"
-     class="{% if request.resolver_match.url_name == 'choose_battle_deck' %}active{% endif %}">
-    Select Deck
-  </a>
-  <a href="{% url 'standings' %}"
-     class="{% if request.resolver_match.url_name == 'standings' %}active{% endif %}">
-    Leader Board
-  </a>
-</nav>
+  {% if user.is_authenticated %}
+    <nav class="site-nav">
+      <a href="{% url 'home' %}"
+         class="{% if request.resolver_match.url_name == 'home' %}active{% endif %}">
+        Dashboard
+      </a>
+      <a href="{% url 'profile_view' %}"
+         class="{% if request.resolver_match.url_name == 'profile_view' %}active{% endif %}">
+        Profile
+      </a>
+      <a href="{% url 'match_list' %}"
+         class="{% if request.resolver_match.url_name == 'match_list' %}active{% endif %}">
+        Matches
+      </a>
+      <a href="{% url 'start_match' %}"
+         class="{% if request.resolver_match.url_name == 'start_match' %}active{% endif %}">
+        Create Match
+      </a>
+      <a href="{% url 'choose_battle_deck' %}"
+         class="{% if request.resolver_match.url_name == 'choose_battle_deck' %}active{% endif %}">
+        Select Deck
+      </a>
+      <a href="{% url 'standings' %}"
+         class="{% if request.resolver_match.url_name == 'standings' %}active{% endif %}">
+        Leader Board
+      </a>
+      <a href="{% url 'shop_view' %}"
+         class="{% if request.resolver_match.url_name == 'shop_view' %}active{% endif %}">
+        Shop
+      </a>
+      <span class="credits">Zenys: {{ request.user.player.credits }}</span>
+      <form method="post" action="{% url 'logout' %}" style="display:inline;">
+        {% csrf_token %}
+        <button type="submit" class="logout-btn">Logout</button>
+      </form>
+    </nav>
+  {% endif %}
