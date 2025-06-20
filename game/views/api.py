@@ -154,21 +154,23 @@ def get_match_state(request, match_id):
     p1 = match.player_one
     p2 = match.player_two
     p1_score = moves.filter(player=p1).count()
-    p2_score = moves.filter(player=p2).count()
+    p2_score = moves.filter(player=p2).count() if p2 else 0
 
     return Response({
-        "match_id":          match.id,
-        "is_active":         match.is_active,
-        "current_turn_id":   match.current_turn.id   if match.current_turn else None,
-        "current_turn_name": match.current_turn.user.username if match.current_turn else None,
-        "player_one":        p1.user.username,
-        "player_two":        p2.user.username if p2 else None,
+        "match_id":            match.id,
+        "is_active":           match.is_active,
+        "current_turn_id":     match.current_turn.id if match.current_turn else None,
+        "current_turn_name":   match.current_turn.user.username if match.current_turn else None,
+        "player_one":          p1.user.username,
+        "player_two":          p2.user.username          if p2 else None,
+        "player_two_id":       p2.id                      if p2 else None,
+        "player_two_is_bot":   getattr(p2, "is_bot", False) if p2 else False,
         "scores": {
             p1.user.username: p1_score,
-            p2.user.username: p2_score
+            p2.user.username if p2 else "": p2_score
         },
-        "winner":            match.winner.user.username if match.winner else None,
-        "board":             board
+        "winner":              match.winner.user.username if match.winner else None,
+        "board":               board
     })
 
 
