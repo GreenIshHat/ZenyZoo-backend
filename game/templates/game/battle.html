@@ -4,79 +4,67 @@
 {% block title %}Battle Arena{% endblock %}
 
 {% block content %}
+  <h1>Zenyzoo: Match #{{ match.id }}</h1>
 
-<h1>Zenyzoo: Match #{{ match.id }}</h1>
-
-{% if not match.player_two %}
-  <p>Waiting for an opponent…</p>
-  <p>
-    <a href="{% url 'start_bot_match' match.id %}?difficulty=random">
-      Play vs Bot (Easy - RamBot)
-    </a>
-    &nbsp;|&nbsp;
-    <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
-      Play vs Bot (Medium – Maxie)
-    </a>
-        &nbsp;|&nbsp;
-    <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
-  Play vs Bot (Hard – BrainBot)
-</a>
-
-  </p>
-
-{% else %}
-{# Trick Django into sending the csrftoken cookie #}
-<form id="csrf-form" style="display:none;">{% csrf_token %}</form>
-
-<div id="score-bar" style="margin-bottom:8px;"></div>
-
-<div id="winner-banner"
-     style="display:none;
-            padding:1rem;
-            background:#ffc;
-            border:1px solid #cc0;
-            text-align:center;
-            font-weight:bold;
-            margin-bottom:8px;">
-</div>
-<div id="info-bar">
-  <strong>Current Turn:</strong>
-  <span id="player-turn">Loading...</span>
-</div>
-
-
-
-<div id="battle-wrapper">
-  <div id="game-board" class="grid"></div>
-  <div id="player-panel">
-    <h2>Your Deck</h2>
-    <div id="player-deck" class="deck"></div>
-  </div>
-</div>
-
-{% endif %}
+  {% if not match.player_two %}
+    <p>Waiting for an opponent…</p>
+    <p>
+      <a href="{% url 'start_bot_match' match.id %}?difficulty=random">
+        Play vs Bot (Easy – RamBot)
+      </a>
+      &nbsp;|&nbsp;
+      <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
+        Play vs Bot (Medium – Maxie)
+      </a>
+      &nbsp;|&nbsp;
+      <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
+        Play vs Bot (Hard – BrainBot)
+      </a>
+      &nbsp;|&nbsp;
+      <a href="{% url 'start_bot_match' match.id %}?difficulty=alphabeta">
+        Play vs Bot (Hard – AlphaBeta)
+      </a>
+    </p>
+  {% else %}
+    {# force Django to set CSRF cookie #}
+    <form id="csrf-form" style="display:none;">{% csrf_token %}</form>
+    <div id="score-bar" style="margin-bottom:8px;"></div>
+    <div id="winner-banner" style="display:none;…"></div>
+    <div id="info-bar">
+      <strong>Current Turn:</strong>
+      <span id="player-turn">Loading…</span>
+    </div>
+    <div id="battle-wrapper">
+      <div id="game-board" class="grid"></div>
+      <div id="player-panel">
+        <h2>Your Deck</h2>
+        <div id="player-deck" class="deck"></div>
+      </div>
+    </div>
+  {% endif %}
 {% endblock %}
 
 {% block scripts %}
-<script>
-  // Must be on battle page
-  window.playerId = {{ request.user.player.id }};
-  window.yourName = "{{ request.user.username }}";
-  window.matchId = {{ match.id }};
+  <script>
+    window.playerId    = {{ request.user.player.id }};
+    window.yourName    = "{{ request.user.username }}";
+    window.matchId     = {{ match.id }};
+    {% if match.player_two %}
+      window.opponentId   = {{ match.player_two.id }};
+      window.opponentName = "{{ match.player_two.user.username }}";
+      window.isBotMatch   = {{ match.player_two.is_bot|yesno:"true,false" }};
+    {% else %}
+      window.opponentId   = null;
+      window.opponentName = null;
+      window.isBotMatch   = false;
+    {% endif %}
+  </script>
 
-  {% if match.player_two %}
-  window.opponentId = {{ match.player_two.id }};
-  window.opponentName = "{{ match.player_two.user.username }}";
-window.isBotMatch   = {{ match.player_two.is_bot|yesno:"true,false" }};
-
+  {% if not match.player_two %}
+    {# only poll “waiting for opponent” #}
+    <script type="module" src="{% static 'game/js/waiting.js' %}"></script>
   {% else %}
-  window.opponentId = null;
-  window.opponentName = null;
-  window.isBotMatch = false;
+    {# actual battle logic & polling for moves #}
+    <script type="module" src="{% static 'game/js/main.js' %}"></script>
   {% endif %}
-</script>
-
-
-<script type="module" src="{% static 'game/js/main.js' %}"></script>
-
 {% endblock %}

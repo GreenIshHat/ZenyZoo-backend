@@ -1,65 +1,89 @@
-import { loadBoard, makeCard, applyFlips, updateScores } from "./ui.js";
+// static/game/js/main.js
+
 import { getCSRFToken, fetchJson } from "./utils.js";
-import {
-  loadDeck,
-  attemptMove,
-  triggerBotPlay,
-  pollHumanMatch
-} from "./api.js";
+import { loadBoard, makeCard, applyFlips, updateScores } from "./ui.js";
+import { loadDeck, attemptMove, triggerBotPlay, pollHumanMatch } from "./api.js";
 
 window.addEventListener("DOMContentLoaded", () => {
-  // Bail out if not a battle page
+  // ─── Bail if not on a battle page ─────────────────────────────
   if (typeof window.playerId === "undefined" || typeof window.matchId === "undefined") {
     console.warn("⚠️ Not on battle page — exiting.");
     return;
   }
 
-  // — Pull from Django template tags —
+  // ─── Globals from Django template ─────────────────────────────
   const playerId     = window.playerId;
   const yourName     = window.yourName;
   const matchId      = window.matchId;
   let   opponentId   = window.opponentId;
   let   opponentName = window.opponentName;
   let   isBotMatch   = window.isBotMatch;
+  const csrftoken    = getCSRFToken();
 
-  // — API endpoints —
+  // ─── API endpoints ────────────────────────────────────────────
   const deckApi   = `/game/api/battle-deck/${playerId}/`;
   const moveApi   = `/game/api/move/`;
   const statusApi = `/game/api/match/${matchId}/`;
   const botApi    = `/game/api/battle-bot/`;
 
-  // — DOM refs —
-  const boardEl = document.getElementById("game-board");
-  const deckEl  = document.getElementById("player-deck");
-  const infoEl  = document.getElementById("player-turn");
-  const seenMoves = new Set();
-  let   currentTurn = null;
-  const cellMap    = {};
-  const cardMap    = {};
-  const cardDataMap= {};
+  // ─── DOM refs ─────────────────────────────────────────────────
+  const boardEl    = document.getElementById("game-board");
+  const deckEl     = document.getElementById("player-deck");
+  const infoEl     = document.getElementById("player-turn");
+  const scoreBarEl = document.getElementById("score-bar");
+  const bannerEl   = document.getElementById("winner-banner");
 
-  // 1) Build board and store cells in cellMap
+  // ─── State & maps ─────────────────────────────────────────────
+  let   currentTurn = null;
+  const seenMoves   = new Set();
+  const cellMap     = {};
+  const cardMap     = {};
+  const cardDataMap = {};
+
+  // ─── 1) Build grid + click handler ────────────────────────────
   loadBoard(boardEl, pos => {
     if (currentTurn !== playerId) return;
     const sel = document.querySelector(".card.selected");
     if (!sel) return alert("Please select a card first.");
+
+    // Draw our card immediately:
+    const pcId = +sel.dataset.pcId;
+    const cd   = cardDataMap[pcId];
+    const humanCard = makeCard({
+      player_card_id: pcId,
+      image:          cd.image,
+      card_name:      cd.name,
+      card_top:       cd.stats.top,
+      card_right:     cd.stats.right,
+      card_bottom:    cd.stats.bottom,
+      card_left:      cd.stats.left
+    });
+    humanCard.classList.add("in-cell","my-card","fade-in");
+    boardEl.children[pos].appendChild(humanCard);
+    seenMoves.add(pos);
+    sel.classList.add("used");
+    sel.classList.remove("selected");
+
+    // Send move
     attemptMove(moveApi, {
       match_id:  matchId,
       player_id: playerId,
-      card_id:   +sel.dataset.pcId,
+      card_id:   pcId,
       position:  pos
-    }, { onResult: handleResult });
+    }, {
+      csrftoken,
+      onResult: handleResult
+    });
   });
+  // stash the cell elements for flips
   Array.from(boardEl.children).forEach((cell, i) => cellMap[i] = cell);
 
-  // 2) Load deck, then initial match state
+  // ─── 2) Load deck → initial state ─────────────────────────────
   loadDeck(deckApi, deckEl, makeCard, cardMap, cardDataMap, () => {
-    fetchJson(statusApi)
-      .then(renderState)
-      .catch(e => console.error("Error loading state:", e));
+    fetchJson(statusApi).then(renderState).catch(e => console.error("Error loading state:", e));
   });
 
-  // 3) Poll for human-vs-human events
+  // ─── 3) Poll human-vs-human ───────────────────────────────────
   pollHumanMatch(statusApi, {
     playerId,
     opponentId,
@@ -68,10 +92,18 @@ window.addEventListener("DOMContentLoaded", () => {
     onOppMove: ()   => fetchJson(statusApi).then(renderState)
   });
 
-  // ─── State rendering & handlers ────────────────────────────────
+  // ─── State rendering & handlers ───────────────────────────────
 
   function renderState(data) {
-    // A new opponent joined?
+    // If finished match, persist banner and stop
+    if (!data.is_active) {
+      bannerEl.textContent  = `🏁 ${data.winner} wins!`;
+      bannerEl.style.display = "block";
+      updateScores(scoreBarEl, data.scores);
+      return;
+    }
+
+    // New opponent joined?
     if (!opponentId && data.player_two_id) {
       opponentId   = data.player_two_id;
       opponentName = data.player_two;
@@ -79,47 +111,55 @@ window.addEventListener("DOMContentLoaded", () => {
       return location.reload();
     }
 
-    // Draw only brand-new moves
+    // Draw only new moves (e.g. opponent’s)
     data.board.forEach(m => {
       if (!seenMoves.has(m.position)) {
         seenMoves.add(m.position);
         const el = makeCard(m);
         el.classList.add(
-          m.player_id===playerId ? "my-card" : "opponent-card",
+          m.player_id === playerId ? "my-card" : "opponent-card",
           "in-cell","fade-in"
         );
         boardEl.children[m.position].appendChild(el);
       }
     });
 
-    // Grey-out used cards
+    // Grey‐out used deck cards
     Object.values(cardMap).forEach(tile => {
       tile.classList.toggle(
         "used",
-        data.board.some(m=>+tile.dataset.pcId===m.player_card_id)
+        data.board.some(m => +tile.dataset.pcId === m.player_card_id)
       );
     });
 
-    // Flips/scores/game-over
+    // Flips / scores / banner / turn text
     handleResult(data);
 
-    // If it’s the bot’s turn, trigger it
-    if (isBotMatch && data.current_turn_id===opponentId && !data.game_over) {
-      triggerBotPlay(botApi, { match_id: matchId }, { onResult: handleResult });
+    // If it’s the bot’s turn, fire after 2 s so you see your move
+    if (isBotMatch && data.current_turn_id === opponentId && !data.game_over) {
+      setTimeout(() => {
+        triggerBotPlay(botApi, { match_id: matchId }, {
+          csrftoken,
+          onResult: handleResult
+        });
+      }, 2000);
     }
   }
 
   function handleResult(data) {
-    applyFlips(cellMap, data.flips   || []);
+    // Animate flips
+    applyFlips(cellMap, data.flips    || []);
     applyFlips(cellMap, data.bot_flips||[]);
-    updateScores(infoEl, data.scores);
+    // Update score bar
+    updateScores(scoreBarEl, data.scores);
 
+    // Game-over?
     if (data.game_over) {
-      const banner = document.getElementById("winner-banner");
-      banner.textContent = `🏁 ${data.winner} wins!`;
-      banner.style.display = "block";
+      bannerEl.textContent  = `🏁 ${data.winner} wins!`;
+      bannerEl.style.display = "block";
     } else {
-      infoEl.textContent = data.current_turn_id===playerId
+      bannerEl.style.display = "none";
+      infoEl.textContent = data.current_turn_id === playerId
         ? `Your turn, ${yourName}`
         : `${opponentName}'s turn`;
       currentTurn = data.current_turn_id;

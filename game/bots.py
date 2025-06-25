@@ -2,6 +2,7 @@
 from .strategies.random import RandomBot
 from .strategies.minmax import MinMaxBot
 from .strategies.strength import AdvancedStrengthBot
+from .strategies.alphabeta import AlphaBetaBot
 
 
 def load_bot(name, **kwargs):
@@ -16,4 +17,6 @@ def load_bot(name, **kwargs):
         return MinMaxBot(**kwargs)
     if key in ("strength", "heuristic", "advanced"):
         return AdvancedStrengthBot(**kwargs)
+    if key in ("alphabeta", "alpha-beta", "aggressive"):
+        return AlphaBetaBot(**kwargs)
     raise ValueError(f"Unknown bot strategy '{name}'")
