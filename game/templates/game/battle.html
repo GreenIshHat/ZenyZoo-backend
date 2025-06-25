@@ -8,7 +8,21 @@
 <h1>Zenyzoo: Match #{{ match.id }}</h1>
 
 {% if not match.player_two %}
-<p>Waiting for an opponent… <a href="{% url 'start_bot_match' match.id %}">Play vs Bot</a></p>
+  <p>Waiting for an opponent…</p>
+  <p>
+    <a href="{% url 'start_bot_match' match.id %}?difficulty=random">
+      Play vs Bot (Easy - RamBot)
+    </a>
+    &nbsp;|&nbsp;
+    <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
+      Play vs Bot (Medium – Maxie)
+    </a>
+    <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
+  Play vs Bot (Hard – BrainBot)
+</a>
+
+  </p>
+
 {% else %}
 {# Trick Django into sending the csrftoken cookie #}
 <form id="csrf-form" style="display:none;">{% csrf_token %}</form>

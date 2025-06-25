@@ -2,8 +2,11 @@ from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
 from django.utils.crypto import get_random_string
+from django.contrib.auth   import get_user_model
 
 from game.models import Match, Player
+
+User = get_user_model()
 
 @login_required
 def match_list_view(request):
@@ -39,59 +42,80 @@ def start_match(request):
     return redirect('battle_view', match_id=match.id)
 
 
+
 @login_required
 def start_bot_match(request, match_id):
+    """
+    Hit this via:
+      /start_bot_match/<match_id>/?difficulty=random
+      or
+      /start_bot_match/<match_id>/?difficulty=minmax
+    """
+    # 1) Read the chosen strategy from the querystring
+    strategy = request.GET.get('difficulty', 'random').lower()
+
+    # 2) Load the match waiting for a second player
     match = get_object_or_404(Match, id=match_id, player_two__isnull=True)
 
+    # 3) Ensure bot user & player exist
     bot_user, _ = User.objects.get_or_create(
-        username="RandomBot",
+        username="RamBot" if strategy == "random" else "Maxie Bot",
         defaults={'password': get_random_string(12)}
     )
     bot_player, created = Player.objects.get_or_create(
         user=bot_user,
-        defaults={'username': "RandomBot"}
+        defaults={'username': bot_user.username}
     )
-    # **Always** mark as bot and set strategy**
+
+    # 4) Mark as bot and save the chosen strategy
     bot_player.is_bot = True
-    bot_player.bot_strategy = "random"
+    bot_player.bot_strategy = strategy
     bot_player.save()
 
+    # 5) Attach to match
     match.player_two = bot_player
+    # (Optional) also store on the match itself if you have a field:
+    # match.bot_strategy = strategy
     match.save()
 
+    # 6) Redirect into the battle view
     return redirect('battle_view', match_id=match.id)
+
 
 
 @login_required
 def standings_view(request):
     """
-    Renders the human leaderboard: total played, wins, draws, losses, win_rate.
+    Renders two leaderboards: human players and bot players.
     """
-    # Only human players
-    players = Player.objects.filter(is_bot=False)
+    def build_table(players_qs):
+        table = []
+        for p in players_qs:
+            played   = p.total_played()
+            wins     = p.total_wins()
+            draws    = p.total_draws()
+            losses   = p.total_losses()
+            win_rate = round((wins / played) * 100, 1) if played else None
 
-    # Build a simple list of dicts with precomputed stats
-    table = []
-    for p in players:
-        played   = p.total_played()
-        wins     = p.total_wins()
-        draws    = p.total_draws()
-        losses   = p.total_losses()
-        # round to one decimal place if there were any games
-        win_rate = round((wins / played) * 100, 1) if played else None
+            table.append({
+                'username':  p.user.username,
+                'played':    played,
+                'wins':      wins,
+                'draws':     draws,
+                'losses':    losses,
+                'win_rate':  win_rate,
+            })
+        # sort by wins desc, then win_rate desc
+        table.sort(key=lambda row: (-row['wins'], -(row['win_rate'] or 0)))
+        return table
 
-        table.append({
-            'username':  p.user.username,
-            'played':    played,
-            'wins':      wins,
-            'draws':     draws,
-            'losses':    losses,
-            'win_rate':  win_rate,
-        })
+    human_players = Player.objects.filter(is_bot=False)
+    bot_players   = Player.objects.filter(is_bot=True)
 
-    # Sort by wins descending, then by win_rate descending
-    table.sort(key=lambda row: (-row['wins'], -(row['win_rate'] or 0)))
+    human_standings = build_table(human_players)
+    bot_standings   = build_table(bot_players)
 
     return render(request, 'game/standings.html', {
-        'standings': table
+        'human_standings': human_standings,
+        'bot_standings':   bot_standings,
     })

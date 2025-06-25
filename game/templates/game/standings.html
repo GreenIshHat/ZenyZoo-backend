@@ -3,9 +3,9 @@
 
 {% block content %}
 
-  <h2>🏆 Leaderboard</h2>
+  <h2>🏆 Human Leaderboard</h2>
 
-  {% if standings %}
+  {% if human_standings %}
     <table class="standings-table">
       <thead>
         <tr>
@@ -19,7 +19,7 @@
         </tr>
       </thead>
       <tbody>
-        {% for row in standings %}
+        {% for row in human_standings %}
           <tr>
             <td>{{ forloop.counter }}</td>
             <td>{{ row.username }}</td>
@@ -39,8 +39,49 @@
       </tbody>
     </table>
   {% else %}
-    <p>No completed matches yet.</p>
+    <p>No human matches played yet.</p>
   {% endif %}
+
+
+  <h2>🤖 Bot Leaderboard</h2>
+
+  {% if bot_standings %}
+    <table class="standings-table">
+      <thead>
+        <tr>
+          <th>#</th>
+          <th>Bot</th>
+          <th>Played</th>
+          <th>Wins</th>
+          <th>Draws</th>
+          <th>Losses</th>
+          <th>Win %</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for row in bot_standings %}
+          <tr>
+            <td>{{ forloop.counter }}</td>
+            <td>{{ row.username }}</td>
+            <td>{{ row.played }}</td>
+            <td>{{ row.wins }}</td>
+            <td>{{ row.draws }}</td>
+            <td>{{ row.losses }}</td>
+            <td>
+              {% if row.win_rate is not None %}
+                {{ row.win_rate }}%
+              {% else %}
+                N/A
+              {% endif %}
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% else %}
+    <p>No bot matches played yet.</p>
+  {% endif %}
+
 {% endblock %}
 
 {% block extra_css %}

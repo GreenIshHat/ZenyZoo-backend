@@ -91,31 +91,43 @@ document.addEventListener("DOMContentLoaded", () => {
       .catch(e => console.error("loadDeck error:", e));
   }
 
-  /** 
-   * Central handler for flips, scores, turn‐text and game‐over banner 
-   */
-  function handlePostMove(data) {
-    if (Array.isArray(data.flips))     applyFlips(data.flips);
-    if (Array.isArray(data.bot_flips)) applyFlips(data.bot_flips);
+  /**
+ * Central handler for flips, scores, turn‐text and game‐over banner.
+ * Relies on:
+ *   window.playerId       (your numeric player ID)
+ *   window.yourName       (your username)
+ *   window.opponentName   (e.g. "RamBot" or "Maxie")
+ */
+function handlePostMove(data) {
+  // 1) Apply board flips
+  if (Array.isArray(data.flips))     applyFlips(data.flips);
+  if (Array.isArray(data.bot_flips)) applyFlips(data.bot_flips);
 
-    if (data.scores) updateScores(data.scores);
+  // 2) Update the score display
+  if (data.scores) updateScores(data.scores);
 
-    if (data.game_over) {
-      gameOver = true;
-      const banner = document.getElementById("winner-banner");
-      banner.textContent = `🏁 ${data.winner} wins!`;
-      banner.style.display = "block";
-      document.getElementById("battle-wrapper").classList.add("battle-over");
-      return;
-    }
+  // 3) Game-over?
+if (data.game_over) {
+  gameOver = true;
+  const banner = document.getElementById("winner-banner");
+  // data.winner is already the username string
+  banner.textContent = `🏁 ${data.winner} wins!`;
+  banner.style.display = "block";
+  document.getElementById("battle-wrapper").classList.add("battle-over");
+  return;
+}
 
-    document.getElementById("winner-banner").style.display = "none";
-    const turnText = (data.current_turn_id === playerId)
-      ? `Your turn, ${yourName}`
-      : `${data.current_turn_name}'s turn`;
-    infoBar.textContent = turnText;
-    currentTurn = data.current_turn_id;  // ← keep this in sync
-  }
+
+  // 4) Otherwise, hide banner and show whose turn it is
+  document.getElementById("winner-banner").style.display = "none";
+  const turnText = (data.current_turn_id === playerId)
+    ? `Your turn, ${yourName}`
+    : `${opponentName}'s turn`;
+  document.getElementById("info-bar").textContent = turnText;
+
+  // 5) Keep track of whose turn we just saw
+  currentTurn = data.current_turn_id;
+}
 
   /** 
    * Fetch full state and render **only new** moves + deck-tile usage 
