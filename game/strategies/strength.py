@@ -18,7 +18,10 @@ class AdvancedStrengthBot(BotStrategy):
       • Pick the card whose matching 'our_side' strength is the smallest value > that threshold.
       • If none, pick the highest 'our_side' value.
     """
-
+    def __init__(self, **kwargs):
+        # si quieres, lee kwargs['depth'] pero no es obligatorio
+        pass
+        
     def choose_move(self, match, bot_player):
         # 1) Build board map: pos -> {'player':id, 'card':PlayerCard}
         moves = MatchMove.objects.filter(match=match)

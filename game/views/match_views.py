@@ -43,44 +43,48 @@ def start_match(request):
 
 
 
+
 @login_required
 def start_bot_match(request, match_id):
     """
-    Hit this via:
-      /start_bot_match/<match_id>/?difficulty=random
-      or
-      /start_bot_match/<match_id>/?difficulty=minmax
+    Attaches a bot (Random, MinMax, or Advanced Strength) as Player Two,
+    naming them appropriately so the front end shows the right label.
     """
-    # 1) Read the chosen strategy from the querystring
+    # 1) Read the chosen strategy ('random','minmax','advanced', etc.)
     strategy = request.GET.get('difficulty', 'random').lower()
 
-    # 2) Load the match waiting for a second player
+    # 2) Map strategy → display name
+    name_map = {
+        'random':   'RamBot',
+        'minmax':   'Maxie Bot',
+        'advanced': 'BrainBot',
+        'strength': 'BrainBot',
+        'heuristic':'BrainBot',
+    }
+    display_name = name_map.get(strategy, strategy.title())
+
+    # 3) Load the waiting match
     match = get_object_or_404(Match, id=match_id, player_two__isnull=True)
 
-    # 3) Ensure bot user & player exist
+    # 4) Get or create a User+Player for that bot
     bot_user, _ = User.objects.get_or_create(
-        username="RamBot" if strategy == "random" else "Maxie Bot",
+        username=display_name,
         defaults={'password': get_random_string(12)}
     )
     bot_player, created = Player.objects.get_or_create(
         user=bot_user,
-        defaults={'username': bot_user.username}
+        defaults={'username': display_name}
     )
 
-    # 4) Mark as bot and save the chosen strategy
+    # 5) Mark as bot and save strategy
     bot_player.is_bot = True
     bot_player.bot_strategy = strategy
     bot_player.save()
 
-    # 5) Attach to match
+    # 6) Attach and go to the battle
     match.player_two = bot_player
-    # (Optional) also store on the match itself if you have a field:
-    # match.bot_strategy = strategy
     match.save()
-
-    # 6) Redirect into the battle view
     return redirect('battle_view', match_id=match.id)
-
 
 
 @login_required

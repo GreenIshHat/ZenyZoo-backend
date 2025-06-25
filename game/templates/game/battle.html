@@ -17,6 +17,7 @@
     <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
       Play vs Bot (Medium – Maxie)
     </a>
+        &nbsp;|&nbsp;
     <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
   Play vs Bot (Hard – BrainBot)
 </a>
@@ -75,5 +76,7 @@ window.isBotMatch   = {{ match.player_two.is_bot|yesno:"true,false" }};
   {% endif %}
 </script>
 
-<script src="{% static 'game/script.js' %}"></script>
+
+<script type="module" src="{% static 'game/js/main.js' %}"></script>
+
 {% endblock %}

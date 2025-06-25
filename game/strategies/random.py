@@ -5,6 +5,10 @@ from game.models import PlayerCard, MatchMove
 
 
 class RandomBot(BotStrategy):
+    def __init__(self, **kwargs):
+        # si quieres, lee kwargs['depth'] pero no es obligatorio
+        pass
+
     def choose_move(self, match, bot_player):
         # 1) Free positions
         occupied = {m.position for m in MatchMove.objects.filter(match=match)}

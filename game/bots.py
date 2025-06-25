@@ -1,6 +1,8 @@
 # game/bots.py
 from .strategies.random import RandomBot
 from .strategies.minmax import MinMaxBot
+from .strategies.strength import AdvancedStrengthBot
+
 
 def load_bot(name, **kwargs):
     """
