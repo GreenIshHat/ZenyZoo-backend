@@ -42,7 +42,15 @@ window.addEventListener("DOMContentLoaded", () => {
 
   // ─── 1) Build grid + click handler ────────────────────────────
   loadBoard(boardEl, pos => {
-    if (currentTurn !== playerId) return;
+    // a) block clicks until we've loaded the first state
+    if (currentTurn === null) return;
+    
+    // b) check turn properly
+    if (currentTurn !== playerId) {
+      alert("🚫 Not your turn!");
+      return;
+    }
+    
     const sel = document.querySelector(".card.selected");
     if (!sel) return alert("Please select a card first.");
 
@@ -146,23 +154,34 @@ window.addEventListener("DOMContentLoaded", () => {
     }
   }
 
-  function handleResult(data) {
-    // Animate flips
-    applyFlips(cellMap, data.flips    || []);
-    applyFlips(cellMap, data.bot_flips||[]);
-    // Update score bar
-    updateScores(scoreBarEl, data.scores);
+function handleResult(data) {
+  // 1) Flips
+  applyFlips(cellMap, data.flips    || []);
+  applyFlips(cellMap, data.bot_flips||[]);
 
-    // Game-over?
-    if (data.game_over) {
-      bannerEl.textContent  = `🏁 ${data.winner} wins!`;
-      bannerEl.style.display = "block";
-    } else {
-      bannerEl.style.display = "none";
-      infoEl.textContent = data.current_turn_id === playerId
-        ? `Your turn, ${yourName}`
-        : `${opponentName}'s turn`;
-      currentTurn = data.current_turn_id;
-    }
+  // 2) Scores
+  updateScores(scoreBarEl, data.scores || {});
+
+  // 3) Winner banner
+  if (data.game_over) {
+    bannerEl.textContent  = `🏁 ${data.winner} wins!`;
+    bannerEl.style.display = "block";
+    return;
   }
+  bannerEl.style.display = "none";
+
+  // 4) Whose turn is it?
+  const turnId   = data.current_turn_id;
+  const turnName = data.current_turn_name;  // <-- use server‐provided name
+
+  currentTurn = turnId;
+
+  if (turnId === playerId) {
+    infoEl.textContent = `Your turn, ${yourName}`;
+  } else {
+    infoEl.textContent = `${turnName}'s turn`;  // <-- guaranteed correct
+  }
+}
+
+
 });

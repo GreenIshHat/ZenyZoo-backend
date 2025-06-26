@@ -12,10 +12,35 @@
          class="{% if request.resolver_match.url_name == 'match_list' %}active{% endif %}">
         Matches
       </a>
+<!-- 
       <a href="{% url 'start_match' %}"
          class="{% if request.resolver_match.url_name == 'start_match' %}active{% endif %}">
         Create Match
       </a>
+      <button id="quick-join">Quick Join</button> 
+      
+      
+  <script>
+    document.getElementById('quick-join').addEventListener('click', async () => {
+      const resp = await fetch("{% url 'quick_match' %}", {
+        method: 'GET',  // or 'POST' if you prefer
+        headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+      });
+      if (resp.redirected) {
+        window.location = resp.url;
+      } else {
+        alert('No open matches—creating a new one for you.');
+        const fallback = await resp.json();
+        window.location = `/battle/${fallback.match_id}/`;
+      }
+    });
+  </script>
+      -->
+
+  <a href="{% url 'quick_match' %}">Quick Play</a>
+
+
+
       <a href="{% url 'choose_battle_deck' %}"
          class="{% if request.resolver_match.url_name == 'choose_battle_deck' %}active{% endif %}">
         Select Deck

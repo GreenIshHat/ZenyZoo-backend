@@ -111,26 +111,45 @@ window.addEventListener("DOMContentLoaded", () => {
       return location.reload();
     }
 
-    // Draw only new moves (e.g. opponent’s)
-    data.board.forEach(m => {
-      if (!seenMoves.has(m.position)) {
-        seenMoves.add(m.position);
-        const el = makeCard(m);
-        el.classList.add(
-          m.player_id === playerId ? "my-card" : "opponent-card",
-          "in-cell","fade-in"
-        );
-        boardEl.children[m.position].appendChild(el);
-      }
-    });
+  // 1) Clear every card out of the grid
+  Array.from(boardEl.children).forEach(cell => {
+    cell.innerHTML = '';
+  });
 
-    // Grey‐out used deck cards
-    Object.values(cardMap).forEach(tile => {
-      tile.classList.toggle(
-        "used",
-        data.board.some(m => +tile.dataset.pcId === m.player_card_id)
-      );
-    });
+  // 2) Draw each persisted move
+  data.board.forEach(m => {
+    // Make sure the API really returned these fields:
+    // position, player_id, player_card_id, card_name, image, card_top, card_right, card_bottom, card_left
+    const move = {
+      position:       m.position,
+      player_id:      m.player_id,
+      player_card_id: m.player_card_id,
+      card: {
+        id:    m.player_card_id,
+        name:  m.card_name,
+        image: m.image,
+        stats: {
+          top:    m.card_top,
+          right:  m.card_right,
+          bottom: m.card_bottom,
+          left:   m.card_left,
+        }
+      }
+    };
+    const el = makeCard(move);
+    el.classList.add(
+      m.player_id === playerId ? 'my-card' : 'opponent-card',
+      'in-cell', 'fade-in'
+    );
+    boardEl.children[m.position].appendChild(el);
+  });
+
+  // 3) Update “used” state on your hand
+  Array.from(deckEl.children).forEach(tile => {
+    const pcId = Number(tile.dataset.pcId);
+    const used = data.board.some(m => m.player_card_id === pcId);
+    tile.classList.toggle('used', used);
+  });
 
     // Flips / scores / banner / turn text
     handleResult(data);

@@ -20,10 +20,10 @@
       <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
         Play vs Bot (Hard – BrainBot)
       </a>
-      &nbsp;|&nbsp;
+      <!-- &nbsp;|&nbsp;
       <a href="{% url 'start_bot_match' match.id %}?difficulty=alphabeta">
         Play vs Bot (Hard – AlphaBeta)
-      </a>
+      </a> -->
     </p>
   {% else %}
     {# force Django to set CSRF cookie #}

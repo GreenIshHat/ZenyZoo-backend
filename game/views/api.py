@@ -264,6 +264,21 @@ def make_move(request):
         "game_over":      False,
     }
 
+    response.update({
+        "player_move": {
+            "position":        position,
+            "player_card_id":  card_obj.id,
+            "template_card_id": card_obj.card.id,
+            "card_name":       card_obj.card.name,
+            "image":           request.build_absolute_uri(card_obj.card.image.url),
+            "card_top":        card_obj.card.strength_top,
+            "card_right":      card_obj.card.strength_right,
+            "card_bottom":     card_obj.card.strength_bottom,
+            "card_left":       card_obj.card.strength_left,
+        }
+    })
+
+
     # 7) If it's a bot’s turn now, let the bot play immediately
     if getattr(next_player, "is_bot", False):
         strat_name = getattr(next_player, "bot_strategy", "random")
@@ -312,8 +327,10 @@ def make_move(request):
             # Switch turn back to human
             match.current_turn = player
             match.save()
-            response["next_turn_id"]   = player.id
-            response["next_turn_name"] = player.user.username
+        
+    response["current_turn_id"]   = match.current_turn.id
+    response["current_turn_name"] = match.current_turn.user.username
+
 
     return Response(response)
 

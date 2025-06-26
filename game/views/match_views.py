@@ -41,7 +41,27 @@ def start_match(request):
     )
     return redirect('battle_view', match_id=match.id)
 
+@login_required
+def quick_match(request):
+    player = request.user.player
+    # Try to join the oldest waiting match not hosted by you
+    match = (Match.objects
+             .filter(player_two__isnull=True, is_active=True)
+             .exclude(player_one=player)
+             .order_by('created_at')
+             .first())
 
+    if match:
+        match.player_two = player
+        match.save()
+    else:
+        match = Match.objects.create(
+            player_one=player,
+            current_turn=player,
+            is_active=True
+        )
+    return redirect('battle_view', match_id=match.id)
+    
 
 
 @login_required

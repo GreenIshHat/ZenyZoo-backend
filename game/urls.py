@@ -3,7 +3,7 @@ from django.contrib.auth.views import LoginView
 from .views.auth_views  import register_form, logout_view
 from .views.game_views  import home_view, profile_view, choose_battle_deck, battle_view, shop_view
 from .views.match_views import (
-                    match_list_view, join_match, start_match, 
+                    match_list_view, join_match, start_match, quick_match,
                     start_bot_match, standings_view
 )
 
@@ -32,6 +32,7 @@ urlpatterns = [
     path('match/<int:match_id>/join/', join_match,      name='join_match'),
     path('battle/<int:match_id>/',    battle_view,      name='battle_view'),
     path('battle/<int:match_id>/bot/',    start_bot_match, name='start_bot_match'),
+    path('matches/quick/', quick_match, name='quick_match'),
 
     # Shop
     path('shop/',     shop_view, name='shop_view'),
