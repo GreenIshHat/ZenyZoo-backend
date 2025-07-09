@@ -178,162 +178,128 @@ def get_match_state(request, match_id):
 # ─── Gameplay ─────────────────────────────────────────────────────────
 
 
-
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def make_move(request):
     """
-    Expects JSON: {
-      "match_id": <int>,
-      "player_id": <int>,
-      "card_id":   <int>,
-      "position":  <int>
-    }
-    Returns JSON with:
-      - flips:      [positions flipped by human]
-      - bot_flips:  [positions flipped by bot]
-      - bot_move:   {position, player_card_id, ...} (if bot acted)
-      - next_turn_id, next_turn_name
-      - game_over, winner (if game ended)
+    Expects JSON: {"match_id": int, "player_id": int, "card_id": int, "position": int}
+    Returns JSON including flips, bot move, scores, game_over flag, winner, and turn info.
     """
-    data      = request.data
-    match     = get_object_or_404(Match, id=data["match_id"], is_active=True)
-    player    = get_object_or_404(Player, id=data["player_id"])
-    card_obj  = get_object_or_404(
-                   PlayerCard,
-                   id=data["card_id"],
-                   owner=player,
-                   in_battle_deck=True
-               )
-    position  = data["position"]
+    data = request.data
+    match = get_object_or_404(Match, id=data["match_id"], is_active=True)
+    player = get_object_or_404(Player, id=data["player_id"])
+    card_obj = get_object_or_404(
+        PlayerCard,
+        id=data["card_id"],
+        owner=player,
+        in_battle_deck=True
+    )
+    position = data["position"]
 
-    # 1) Validate turn
+    # Validate turn
     if match.current_turn != player:
         return Response({"error": "Not your turn"}, status=400)
 
-    # 2) Compute flips for human move
-    existing_moves = list(MatchMove.objects.filter(match=match))
-    board_map = {m.position: m for m in existing_moves}
-    flips    = check_flips(board_map, position, card_obj)
+    # Prepare response
+    response = {
+        "flips": [],
+        "bot_flips": [],
+        "bot_move": None,
+        "next_turn_id": None,
+        "next_turn_name": None,
+        "current_turn_id": None,
+        "current_turn_name": None,
+        "p1_score": 0,
+        "p2_score": 0,
+        "game_over": False,
+        "winner": None,
+    }
 
-    # 3) Apply human flips
+    # 1) Human move flips
+    existing = list(MatchMove.objects.filter(match=match))
+    board_map = {m.position: m for m in existing}
+    flips = check_flips(board_map, position, card_obj)
     for fpos in flips:
         mv = board_map[fpos]
         mv.player = player
         mv.save()
+    response["flips"] = flips
 
-    # 4) Record human move
-    MatchMove.objects.create(
-        match=match,
-        player=player,
-        card=card_obj,
-        position=position
-    )
+    # 2) Record human move
+    MatchMove.objects.create(match=match, player=player, card=card_obj, position=position)
 
-    # 5) Check for game-over after human move
-    total_moves = MatchMove.objects.filter(match=match).count()
-    if total_moves >= 9:
-        # Count scores
-        p1_count = MatchMove.objects.filter(match=match, player=match.player_one).count()
-        p2_count = MatchMove.objects.filter(match=match, player=match.player_two).count() if match.player_two else 0
-        winner = None
-        if p1_count > p2_count:
-            winner = match.player_one
-        elif p2_count > p1_count:
-            winner = match.player_two
-        match.is_active = False
-        match.winner    = winner
-        match.save()
-        return Response({
-            "flips":     flips,
-            "bot_flips": [],
-            "game_over": True,
-            "winner":    winner.user.username if winner else "draw"
-        })
-
-    # 6) Switch turn
+    # 3) Bot move (if applicable)
     next_player = match.player_two if player == match.player_one else match.player_one
-    match.current_turn = next_player
-    match.save()
-
-    # Prepare basic response
-    response = {
-        "flips":          flips,
-        "bot_flips":      [],
-        "next_turn_id":   next_player.id,
-        "next_turn_name": next_player.user.username,
-        "game_over":      False,
-    }
-
-    response.update({
-        "player_move": {
-            "position":        position,
-            "player_card_id":  card_obj.id,
-            "template_card_id": card_obj.card.id,
-            "card_name":       card_obj.card.name,
-            "image":           request.build_absolute_uri(card_obj.card.image.url),
-            "card_top":        card_obj.card.strength_top,
-            "card_right":      card_obj.card.strength_right,
-            "card_bottom":     card_obj.card.strength_bottom,
-            "card_left":       card_obj.card.strength_left,
-        }
-    })
-
-
-    # 7) If it's a bot’s turn now, let the bot play immediately
     if getattr(next_player, "is_bot", False):
-        strat_name = getattr(next_player, "bot_strategy", "random")
+        strat = getattr(next_player, "bot_strategy", "random")
         try:
-            bot = load_bot(strat_name, depth=2)
+            bot = load_bot(strat, depth=2)
         except ValueError:
             bot = load_bot("random", depth=2)
-
         decision = bot.choose_move(match, next_player)
         if decision:
             bpos = decision["position"]
             bcard = decision["card"]
-
-            # Compute flips for bot move
             board2 = {m.position: m for m in MatchMove.objects.filter(match=match)}
             bflips = check_flips(board2, bpos, bcard)
-
-            # Apply bot’s flips
             for fpos in bflips:
                 mv = board2[fpos]
                 mv.player = next_player
                 mv.save()
-
-            # Record bot’s move
-            MatchMove.objects.create(
-                match=match,
-                player=next_player,
-                card=bcard,
-                position=bpos
-            )
-
-            # Add bot_move & bot_flips to response
+            MatchMove.objects.create(match=match, player=next_player, card=bcard, position=bpos)
             response["bot_move"] = {
-                "position":        bpos,
-                "player_card_id":  bcard.id,
+                "position": bpos,
+                "player_card_id": bcard.id,
                 "template_card_id": bcard.card.id,
-                "card_name":       bcard.card.name,
-                "image":           request.build_absolute_uri(bcard.card.image.url),
-                "card_top":        bcard.card.strength_top,
-                "card_right":      bcard.card.strength_right,
-                "card_bottom":     bcard.card.strength_bottom,
-                "card_left":       bcard.card.strength_left,
+                "card_name": bcard.card.name,
+                "image": request.build_absolute_uri(bcard.card.image.url),
+                "card_top": bcard.card.strength_top,
+                "card_right": bcard.card.strength_right,
+                "card_bottom": bcard.card.strength_bottom,
+                "card_left": bcard.card.strength_left,
             }
             response["bot_flips"] = bflips
-
-            # Switch turn back to human
+            # After bot, turn returns to human
             match.current_turn = player
-            match.save()
-        
-    response["current_turn_id"]   = match.current_turn.id
+        else:
+            match.current_turn = player
+    else:
+        # No bot, next turn is opponent
+        match.current_turn = next_player
+    match.save()
+
+    # 4) Compute scores and potential game over
+    total = MatchMove.objects.filter(match=match).count()
+    p1_count = MatchMove.objects.filter(match=match, player=match.player_one).count()
+    p2_count = MatchMove.objects.filter(match=match, player=match.player_two).count() if match.player_two else 0
+    response["p1_score"] = p1_count
+    response["p2_score"] = p2_count
+
+    if total >= 9:
+        # Determine winner
+        if p1_count > p2_count:
+            winner = match.player_one
+        elif p2_count > p1_count:
+            winner = match.player_two
+        else:
+            winner = None
+        match.is_active = False
+        match.winner = winner
+        match.save()
+        response["game_over"] = True
+        response["winner"] = winner.user.username if winner else "draw"
+    else:
+        # Ongoing
+        response["game_over"] = False
+        response["winner"] = None
+        response["next_turn_id"] = match.current_turn.id
+        response["next_turn_name"] = match.current_turn.user.username
+
+    response["current_turn_id"] = match.current_turn.id
     response["current_turn_name"] = match.current_turn.user.username
 
-
     return Response(response)
+
 
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])

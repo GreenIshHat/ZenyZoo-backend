@@ -37,7 +37,7 @@ export function playWin() {
 
 export function fireConfetti() {
   if (typeof confetti !== "function") return;
-  const duration     = 15_000;
+  const duration     = 7_000;
   const animationEnd = Date.now() + duration;
   const defaults     = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 

@@ -5,8 +5,9 @@ export function loadBoard(container, onCellClick) {
   for (let i = 0; i < 9; i++) {
     const cell = document.createElement("div");
     cell.className = "cell";
-    cell.dataset.index = i;
-    cell.addEventListener("click", () => onCellClick(i));
+    cell.dataset.position = i;
+    // pass the real MouseEvent back up so controller can read `evt.currentTarget.dataset.position`
+    cell.addEventListener("click", onCellClick);
     container.appendChild(cell);
   }
 }
@@ -51,4 +52,15 @@ export function updateScores(container, scores) {
   container.textContent = Object.entries(scores)
     .map(([n,c]) => `${n}: ${c}`)
     .join(" — ");
+}
+
+
+export function greyOutCardElement(playerCardId) {
+  const deck = document.getElementById("player-deck");
+  if (!deck) return;
+  const cardEl = deck.querySelector(`.card[data-pc-id='${playerCardId}']`);
+  if (!cardEl) return;
+  cardEl.classList.add("used");
+  cardEl.disabled = true;
+  cardEl.style.pointerEvents = 'none';
 }

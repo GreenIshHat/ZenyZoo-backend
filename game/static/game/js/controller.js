@@ -1,172 +1,206 @@
 // static/game/js/controller.js
 
-import { loadBoard, makeCard, applyFlips, updateScores } from "./ui.js";
-import { startMatchPolling }      from "./polling.js";
-import { initDeck }               from "./deck.js";
-import { fetchJson, getCSRFToken }from "./utils.js";
-import * as sfx                   from "./sfx.js";
+import {
+  loadBoard,
+  applyFlips,
+  updateScores,
+  makeCard,
+  greyOutCardElement
+} from "./ui.js";
+import { startMatchPolling } from "./polling.js";
+import { initDeck } from "./deck.js";
+import { fetchJson, getCSRFToken } from "./utils.js";
+import * as sfx from "./sfx.js";
 
 export class GameController {
   constructor(opts) {
     Object.assign(this, opts);
-    this.boardEl   = document.getElementById("game-board");
-    this.deckEl    = document.getElementById("player-deck");
-    this.turnEl    = document.getElementById("player-turn");
-    this.scoreBar  = document.getElementById("score-bar");
-    this.banner    = document.getElementById("winner-banner");
-    this.selectedCard = null;
-    this.cellMap      = {};
+    this.lastPlays     = new Set();
+    this.currentTurnId = null;
+    this.timerInterval = null;
+    this.selectedCardId = null;
     this.init();
   }
 
   async init() {
-    // 0) background music
+    // 1) Draw empty board
+    loadBoard(this.boardEl, this.onCellClick.bind(this));
+    this.cellMap = {};
+    this.boardEl.querySelectorAll(".cell").forEach(c => {
+      this.cellMap[+c.dataset.position] = c;
+    });
+
+    // 2) Load hand
+    await initDeck({
+      playerId:     this.playerId,
+      container:    this.handEl,
+      onCardSelect: id => this.selectedCardId = id
+    });
+
+    // 3) Initial state fetch
+    try {
+      const init = await fetchJson(this.stateUrl);
+      this._renderIncremental(init);
+      updateScores(this.scoreBar, init.scores);
+      this.updateTurn(init);
+    } catch (e) {
+      console.error("Initial load failed:", e);
+    }
+
+    // start background music
     sfx.playBackground();
 
-    // 1) draw empty grid & stash cell references
-    loadBoard(this.boardEl, pos => this.onCellClick(pos));
-    Array.from(this.boardEl.children)
-         .forEach((cell,i) => this.cellMap[i] = cell);
-
-    // 2) load your deck
-    this.cardDataMap = await initDeck({
-      playerId: this.playerId,
-      container: this.deckEl,
-      onCardSelect: pcId => this.onCardSelect(pcId)
-    });
-
-    // 3) fetch initial match‐state
-    let data;
-    try {
-      data = await fetchJson(`/game/api/match/${this.matchId}/state/`);
-    } catch (e) {
-      console.error("Error loading initial state:", e);
-      return;
-    }
-
-    // 4) render full history
-    if (Array.isArray(data.board)) {
-      this.drawHistory(data.board);
-    }
-
-    // 5) render latest moves (in case API also sent player_move/bot_move)
-    this.drawMoves(data);
-
-    // 6) render flips, scores, winner‐banner
-    this.renderState(data);
-
-    // 7) turn indicator
-    this.updateTurn(data);
-
-    // 8) start polling
-    this.stopPolling = startMatchPolling({
-      statusUrl:    `/game/api/match/${this.matchId}/`,
-      stateUrl:     `/game/api/match/${this.matchId}/state/`,
-      playerId:     this.playerId,
-      onJoin:       ()   => location.reload(),
-      onOppMove:    d => { this.drawMoves(d); this.renderState(d); },
-      onUpdateTurn: d => this.updateTurn(d)
-    });
-  }
-
-  // draw every historical move
-  drawHistory(board) {
-    board.forEach(m => {
-      const el = makeCard(m);
-      el.classList.add(
-        m.player_id === this.playerId ? "my-card" : "opponent-card",
-        "in-cell","fade-in"
-      );
-      this.cellMap[m.position].appendChild(el);
-    });
-  }
-
-  // draw just the “latest” human + bot move
-  drawMoves(data) {
-    if (data.player_move) {
-      const m = data.player_move;
-      const el = makeCard(m);
-      el.classList.add("in-cell","my-card","fade-in");
-      this.cellMap[m.position].appendChild(el);
-      sfx.playPlace();
-    }
-    if (data.bot_move) {
-      const m = data.bot_move;
-      const el = makeCard(m);
-      el.classList.add("in-cell","opponent-card","fade-in");
-      this.cellMap[m.position].appendChild(el);
-      sfx.playBot();
-    }
-  }
-
-  async onCellClick(pos) {
-    if (this.currentTurn !== this.playerId) {
-      return alert("🚫 Not your turn!");
-    }
-    if (!this.selectedCard) {
-      return alert("Select a card first");
-    }
-    const csrftoken = getCSRFToken();
-    const payload = {
-      match_id:  this.matchId,
-      player_id: this.playerId,
-      card_id:   this.selectedCard,
-      position:  pos
-    };
-    const data = await fetchJson("/game/api/move/", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "X-CSRFToken":   csrftoken
+    // 4) Polling
+    this.stopPolling = startMatchPolling(
+      {
+        statusUrl:    this.statusUrl,
+        stateUrl:     this.stateUrl,
+        playerId:     this.playerId,
+        onOppMove:    this._renderIncremental.bind(this),
+        onUpdateTurn: this.updateTurn.bind(this),
       },
-      body: JSON.stringify(payload)
-    });
-
-    // append new cards, re‐render flips/scores/turn
-    this.drawMoves(data);
-    this.renderState(data);
-    this.updateTurn(data);
+      { humInterval: 4000, turnInterval: 2000 }
+    );
   }
 
-  onCardSelect(pcId) {
-    this.deckEl.querySelectorAll(".card.selected")
-      .forEach(e => e.classList.remove("selected"));
-    const el = this.deckEl.querySelector(`[data-pc-id="${pcId}"]`);
-    if (el) {
-      el.classList.add("selected");
-      this.selectedCard = pcId;
+  /**
+   * Handles either:
+   *  - polling data { board: [...] , scores, game_over, ... }
+   *  - move-response data { player_move, bot_move, flips, bot_flips, ... }
+   */
+  _renderIncremental(data) {
+    // Case A: full board array
+    if (Array.isArray(data.board)) {
+      data.board.forEach(mv => this._placeMove(mv));
     }
-  }
-
-  updateTurn(data) {
-    if (!data.is_active) {
-      this.turnEl.textContent = "Game over";
-      if (typeof this.stopPolling === "function") this.stopPolling();
-      return;
+    // Case B: move-response shape
+    else {
+      // human move
+      if (data.player_move) {
+        this._placeMove(data.player_move);
+      }
+      // bot move
+      if (data.bot_move) {
+        this._placeMove(data.bot_move);
+      }
+      // flips
+      if (data.flips?.length) {
+        applyFlips(this.cellMap, data.flips);
+        sfx.playFlip();
+      }
+      if (data.bot_flips?.length) {
+        applyFlips(this.cellMap, data.bot_flips);
+        sfx.playFlip();
+      }
     }
-    this.currentTurn = data.current_turn_id;
-    const isMe = data.current_turn_id === this.playerId;
-    this.turnEl.textContent = isMe
-      ? "Your turn"
-      : `${data.current_turn_name}’s turn`;
-  }
 
-  renderState(data) {
-    // apply any flips + sfx
-    if (data.flips?.length)     { applyFlips(this.cellMap, data.flips);     sfx.playFlip(); }
-    if (data.bot_flips?.length) { applyFlips(this.cellMap, data.bot_flips); sfx.playFlip(); }
-
-    // update scores
-    if (data.scores) updateScores(this.scoreBar, data.scores);
-
-    // winner banner
+    // Update scores & game-over banner in both cases
+    if (data.scores) {
+      updateScores(this.scoreBar, data.scores);
+    }
+    if (data.p1_score != null && data.p2_score != null) {
+      // if you prefer top-level scores:
+      updateScores(this.scoreBar, { p1: data.p1_score, p2: data.p2_score });
+    }
     if (data.game_over) {
-      this.banner.textContent = `🏁 ${data.winner} wins!`;
+      this.banner.textContent   = `🏁 ${data.winner} wins!`;
       this.banner.style.display = "block";
       sfx.playWin();
       sfx.fireConfetti();
+    }
+  }
+
+  /**
+   * Place a single move MV = { position, player_id, player_card_id, ... }
+   */
+  _placeMove(mv) {
+    const isMe   = mv.player_id === this.playerId;
+    const whoCls = isMe ? "my-card" : "opponent-card";
+    const key    = `${isMe ? "p" : "b"}-${mv.position}`;
+
+    if (this.lastPlays.has(key)) return;
+    this.lastPlays.add(key);
+
+    const cell = this.cellMap[mv.position];
+    cell.innerHTML = "";
+
+    const cardEl = makeCard(mv);
+    cardEl.classList.add("in-cell", whoCls);
+    cell.appendChild(cardEl);
+
+    if (isMe) {
+      greyOutCardElement(mv.player_card_id);
+      sfx.playPlace();
     } else {
-      this.banner.style.display = "none";
+      sfx.playFlip();
+    }
+  }
+
+  async makeMove(position) {
+    if (!this.selectedCardId) {
+      console.warn("Select a card first");
+      return;
+    }
+    try {
+      const data = await fetch(this.makeMoveUrl, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+          "X-CSRFToken":  getCSRFToken()
+        },
+        body: JSON.stringify({
+          match_id:  this.matchId,
+          player_id: this.playerId,
+          card_id:   this.selectedCardId,
+          position
+        })
+      }).then(r => r.json());
+
+      // treat POST response like a delta
+      this._renderIncremental(data);
+      this.updateTurn(data);
+      this.selectedCardId = null;
+    } catch (e) {
+      console.error("makeMove failed:", e);
+    }
+  }
+
+  onCellClick(evt) {
+    // if they clicked a card in their hand...
+    const cardEl = evt.target.closest(".card[data-pc-id]");
+    if (cardEl && cardEl.classList.contains("used")) {
+      alert("You’ve already played that card!");
+      return;
+    }
+
+    // then your normal guards:
+    const pos = +evt.currentTarget.dataset.position;
+    if (this.currentTurnId !== this.playerId) return;
+    if (this.cellMap[pos].children.length) return;
+    this.makeMove(pos);
+  }
+
+  updateTurn(data) {
+    const prev = this.currentTurnId;
+    this.currentTurnId = data.current_turn_id;
+    this.playerTurnEl.textContent = data.current_turn_name;
+
+    // start/reset only on actual turn-change
+    if (this.currentTurnId === this.playerId && prev !== this.playerId) {
+      clearInterval(this.timerInterval);
+      let sec = 60;
+      this.timerEl.textContent = `00:${String(sec).padStart(2,"0")}`;
+      this.timerInterval = setInterval(() => {
+        if (--sec >= 0) {
+          this.timerEl.textContent = `00:${String(sec).padStart(2,"0")}`;
+        } else {
+          clearInterval(this.timerInterval);
+        }
+      }, 1000);
+
+    } else if (prev === this.playerId && this.currentTurnId !== this.playerId) {
+      clearInterval(this.timerInterval);
+      this.timerEl.textContent = "";
     }
   }
 }
