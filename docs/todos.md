@@ -7,7 +7,70 @@ allow user to only create 1 match
 
 bug: check lose message for the loser
 
+resize images or cloudinary integration.
+similar for sound cloud load
+
 ---
+
+Today’s progress recap & outstanding items
+
+    Global Chat up & styled, with join/leave notices over WebSockets.
+
+    Polling-based game flow refactored into startMatchPolling(). Deck loads, moves place, flips animate, SFX wired, confetti blasts on game‐over.
+
+    Bug triage in flight:
+
+        Premature “Game over” firing
+
+        Missing board redraw on first load
+
+        Two-player auto-refresh inconsistencies
+
+        Timer UI still pending
+
+        Minor JS exports/imports and sfx module cleanups
+
+Next-up feature ideas
+
+    Real-time & Networking
+
+        WebSocket GameConsumer instead of polling
+
+        Server-driven per-move countdown + auto-forfeit
+
+    Social & Matchmaking
+
+        In-match chat (team vs. global)
+
+        Public lobbies & invitation links
+
+        Spectator mode
+
+    UI/UX Enhancements
+
+        Polish flip animations & particle effects
+
+        Mobile-friendly/touch gestures
+
+        Accessibility (keyboard nav, ARIA, color-blind support)
+
+    Gameplay & Content
+
+        Rematch/draw proposals
+
+        Alternate rule-sets (blitz, power-ups)
+
+        Achievements & badges
+
+    Persistence & Analytics
+
+        Elo leaderboards & stats dashboard
+
+        Match replays
+
+        Usage metrics (DAU, match length, popular decks)
+
++++
 
 🦄 Zeny Zoo: Updated Task & Bug List (Priority Extract)
 1. High-Priority:
