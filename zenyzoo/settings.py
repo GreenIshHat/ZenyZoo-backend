@@ -24,12 +24,23 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 DEBUG      =  os.environ.get('DEBUG', default=False)
 
-ALLOWED_HOSTS =  os.environ.get('ALLOWED_HOSTS', default='localhost').split(',')
-CSRF_TRUSTED_ORIGINS = os.environ.get(
-    "CSRF_TRUSTED_ORIGINS",
+# ALLOWED_HOSTS =  os.environ.get('ALLOWED_HOSTS', default='localhost').split(',')
+# CSRF_TRUSTED_ORIGINS = os.environ.get(
+#     "CSRF_TRUSTED_ORIGINS",
+#     "https://zenyzoo-backend.onrender.com"
+# ).split(",")
+ALLOWED_HOSTS = [
+    "zenyzoo-backend.onrender.com",
     "https://zenyzoo-backend.onrender.com"
-).split(",")
+    "localhost",
+    "127.0.0.1",
+]
 
+CSRF_TRUSTED_ORIGINS = [
+    "https://zenyzoo-backend.onrender.com",
+    "http://localhost:8000",            # if you do local dev
+    "http://127.0.0.1:8000",
+]
 
 # Application definition
 
