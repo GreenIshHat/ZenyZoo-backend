@@ -1,35 +1,35 @@
 // static/game/js/deck.js
 
 import { fetchJson } from "./utils.js";
-import { makeCard }    from "./ui.js";
+import { makeCard } from "./ui.js";
 
 /**
- * Fetch & render your 7-card deck.
- * @returns {Promise<Object.<number,object>>} player_card_id → cardData
+ * Fetches the 7 battle-deck cards and renders them into `container`.
+ * Returns the array of card-data objects for later use.
  */
 export async function initDeck({ playerId, container, onCardSelect }) {
-  const url = `/game/api/battle-deck/${playerId}/`;
-  const json = await fetchJson(url);
-
-  const cardDataMap = {};
-  container.innerHTML = "";
-
-  json.battle_deck.forEach(cd => {
-    cardDataMap[cd.player_card_id] = cd;
-    const el = makeCard(cd);
+  // 1) Fetch from your API
+  const data = await fetchJson(`/game/api/battle-deck/${playerId}/`);
+  
+  // 2) Render each card into the container
+  data.battle_deck.forEach(cd => {
+    const el = makeCard({
+      player_card_id:  cd.player_card_id,
+      template_card_id: cd.template_card_id,
+      card_name:       cd.name,
+      image:           cd.image,
+      stats:           cd.stats
+    });
+    // expose the id for grey-out
     el.dataset.pcId = cd.player_card_id;
 
     el.addEventListener("click", () => {
-      container.querySelectorAll(".card.selected")
-               .forEach(c => c.classList.remove("selected"));
-      if (!el.classList.contains("used")) {
-        el.classList.add("selected");
-        onCardSelect(cd.player_card_id);
-      }
+      onCardSelect(cd.player_card_id);
     });
 
     container.appendChild(el);
   });
 
-  return cardDataMap;
+  // 3) Return the raw array so controller can build its lookup
+  return data.battle_deck;
 }

@@ -7,12 +7,21 @@ const placeAudio= new Audio("/static/game/sfx/play.ogg");
 const botAudio  = new Audio("/static/game/sfx/play.ogg");
 const winAudio  = new Audio("/static/game/sfx/win.ogg");
 
-// Configure looping/background
-bgAudio.loop   = true;
-bgAudio.volume = 0.2;
+let _bgAudio = null;
 
 export function playBackground() {
-  bgAudio.play().catch(() => {});
+  if (_bgAudio) return;
+  _bgAudio = new Audio("/static/game/sfx/background.mp3");
+  _bgAudio.loop   = true;
+  _bgAudio.volume = 0.3;
+  _bgAudio.play().catch(()=>{});
+}
+
+export function stopBackground() {
+  if (!_bgAudio) return;
+  _bgAudio.pause();
+  _bgAudio.currentTime = 0;
+  _bgAudio = null;
 }
 
 export function playFlip() {
@@ -37,7 +46,7 @@ export function playWin() {
 
 export function fireConfetti() {
   if (typeof confetti !== "function") return;
-  const duration     = 7_000;
+  const duration     = 3_000;
   const animationEnd = Date.now() + duration;
   const defaults     = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 0 };
 
