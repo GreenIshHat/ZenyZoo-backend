@@ -6,6 +6,7 @@ const flipAudio = new Audio("/static/game/sfx/flip.ogg");
 const placeAudio= new Audio("/static/game/sfx/play.ogg");
 const botAudio  = new Audio("/static/game/sfx/play.ogg");
 const winAudio  = new Audio("/static/game/sfx/win.ogg");
+const loseAudio  = new Audio("/static/game/sfx/lose.ogg");
 
 let _bgAudio = null;
 
@@ -42,6 +43,11 @@ export function playBot() {
 export function playWin() {
   winAudio.currentTime = 0;
   winAudio.play().catch(() => {});
+}
+
+export function playLose() {
+  loseAudio.currentTime = 0;
+  loseAudio.play().catch(() => {});
 }
 
 export function fireConfetti() {

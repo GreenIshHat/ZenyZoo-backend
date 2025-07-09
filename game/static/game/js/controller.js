@@ -16,6 +16,7 @@ export class GameController {
     constructor(opts) {
         Object.assign(this, opts);
         this.lastPlays = new Set();
+        this.yourName      = opts.yourName;    // ← store your username
         this.currentTurnId = null;
         this.timerInterval = null;
         this.selectedCardId = null;
@@ -100,13 +101,26 @@ export class GameController {
         }
 
         // game-over
-        if (data.game_over) {
-            this.banner.textContent = `🏁 ${data.winner} wins!`;
-            this.banner.style.display = "block";
-            sfx.playWin();
-            sfx.fireConfetti();
-            sfx.stopBackground();
-        }
+    if (data.game_over && !this.gameOver) {
+      this.gameOver = true;
+      this.stopPolling();
+      sfx.stopBackground();
+
+      // Compare against yourName, not the turn label!
+    const isWin = data.winner_id === this.playerId;
+      this.banner.textContent = isWin
+        ? "🎉 You win!"
+        : "😢 You lose!";
+      this.banner.style.display = "block";
+
+      if (isWin) {
+        sfx.playWin();
+        sfx.fireConfetti();
+      } else {
+        sfx.playLose();
+      }
+}
+
     }
 
     /**
@@ -134,18 +148,39 @@ export class GameController {
         }
     }
 
+
+    // Fully re‐draw every cell from scratch
+    _renderFullBoard(boardArr) {
+        boardArr.forEach(mv => {
+            const isMe = mv.player_id === this.playerId;
+            const whoCls = isMe ? "my-card" : "opponent-card";
+            const key = `${isMe ? "p" : "b"}-${mv.position}`;
+
+            this.lastPlays.add(key);
+            const cell = this.cellMap[mv.position];
+            cell.innerHTML = "";
+
+            const cardEl = makeCard(mv);
+            cardEl.classList.add("in-cell", whoCls);
+            cell.appendChild(cardEl);
+
+            if (isMe) greyOutCardElement(mv.player_card_id);
+        });
+    }
+
     /**
      * Click handler: optimistic UI + POST + reconcile
      */
+
     async makeMove(position) {
         if (!this.selectedCardId) {
             alert("Select a card first!");
             return;
         }
 
-        // Build optimistic move object from your deck metadata
+        // 1) Optimistically place your card
         const cd = this.cardDataMap[this.selectedCardId];
-        const optimistic = {
+        this._placeMove({
             position,
             player_id: this.playerId,
             player_card_id: this.selectedCardId,
@@ -156,13 +191,12 @@ export class GameController {
             card_right: cd.stats.right,
             card_bottom: cd.stats.bottom,
             card_left: cd.stats.left
-        };
-        // Draw it immediately:
-        this._placeMove(optimistic);
+        });
+        greyOutCardElement(this.selectedCardId);
 
-        // Send to server
+        // 2) Send to server
         try {
-            const data = await fetch(this.makeMoveUrl, {
+            const response = await fetch(this.makeMoveUrl, {
                 method: "POST",
                 headers: {
                     "Content-Type": "application/json",
@@ -174,20 +208,52 @@ export class GameController {
                     card_id: this.selectedCardId,
                     position
                 })
-            }).then(r => {
-                if (!r.ok) throw new Error(`HTTP ${r.status}`);
-                return r.json();
             });
+            if (!response.ok) throw new Error(`HTTP ${response.status}`);
+            await response.json();  // ignore; we’ll do a fresh state fetch
 
-            // reconcile flips, bot_move, scores & turn
-            this._renderIncremental(data);
-            this.updateTurn(data);
+            // 3) Now fetch the full state to get both boards, flips, scores, and game_over
+            const full = await fetchJson(this.stateUrl);
+
+            // 4) Clear and re-render everything:
+            this.lastPlays.clear();
+            this._renderFullBoard(full.board);
+            updateScores(this.scoreBar, full.scores);
+
+            // 5) Banner if game over
+                // after re-fetching full state into `full`:
+    if (full.game_over && !this.gameOver) {
+      this.gameOver = true;
+      this.stopPolling();
+      sfx.stopBackground();
+
+    const isWin = full.winner_id === this.playerId;
+      this.banner.textContent = isWin
+        ? "🎉 You win!"
+        : "😢 You lose!";
+      this.banner.style.display = "block";
+
+      if (isWin) {
+        sfx.playWin();
+        sfx.fireConfetti();
+      } else {
+        sfx.playLose();
+      }
+    }
+
+            // 6) Reset the timer if it’s back to your turn
+            this.updateTurn(full);
+            if (full.current_turn_id === this.playerId) {
+                this._startTimer();
+            }
+
             this.selectedCardId = null;
         } catch (err) {
             console.error("makeMove failed:", err);
             alert("Move failed: " + err.message);
         }
     }
+
 
     onCellClick(evt) {
         // block clicking greyed out deck cards
@@ -206,55 +272,55 @@ export class GameController {
     }
 
 
-   // helper to start a fresh 60s countdown
-_startTimer() {
-  clearInterval(this.timerInterval);
-  let remaining = 60;
-  this.timerEl.textContent = `00:${String(remaining).padStart(2,"0")}`;
-  this.timerInterval = setInterval(() => {
-    remaining--;
-    if (remaining >= 0) {
-      this.timerEl.textContent = `00:${String(remaining).padStart(2,"0")}`;
-    } else {
-      clearInterval(this.timerInterval);
-      console.log("[Timer] Expired");
+    // helper to start a fresh 60s countdown
+    _startTimer() {
+        clearInterval(this.timerInterval);
+        let remaining = 60;
+        this.timerEl.textContent = `00:${String(remaining).padStart(2, "0")}`;
+        this.timerInterval = setInterval(() => {
+            remaining--;
+            if (remaining >= 0) {
+                this.timerEl.textContent = `00:${String(remaining).padStart(2, "0")}`;
+            } else {
+                clearInterval(this.timerInterval);
+                console.log("[Timer] Expired");
+            }
+        }, 1000);
     }
-  }, 1000);
-}
 
-// helper to stop & clear the countdown
-_stopTimer() {
-  clearInterval(this.timerInterval);
-  this.timerEl.textContent = "";
-}
-
-/**
- * Called whenever the turn‐poll fires.
- * Only resets the timer when the incoming turn differs from our stored one.
- */
-updateTurn(data) {
-  // normalize to numbers
-  const incoming = Number(data.current_turn_id);
-  const prev     = Number(this.currentTurnId);
-  console.log(`[Timer] updateTurn called: incoming=${incoming}, prev=${prev}`);
-
-  if (incoming !== prev) {
-    // record & update UI
-    this.currentTurnId = incoming;
-    this.playerTurnEl.textContent = data.current_turn_name;
-
-    // if it’s now *your* turn, start; else stop
-    if (incoming === this.playerId) {
-      console.log("[Timer] You gained the turn — starting timer");
-      this._startTimer();
-    } else {
-      console.log("[Timer] You lost the turn — clearing timer");
-      this._stopTimer();
+    // helper to stop & clear the countdown
+    _stopTimer() {
+        clearInterval(this.timerInterval);
+        this.timerEl.textContent = "";
     }
-  } else {
-    console.log("[Timer] Turn unchanged — leaving timer running");
-  }
-}
+
+    /**
+     * Called whenever the turn‐poll fires.
+     * Only resets the timer when the incoming turn differs from our stored one.
+     */
+    updateTurn(data) {
+        // normalize to numbers
+        const incoming = Number(data.current_turn_id);
+        const prev = Number(this.currentTurnId);
+        console.log(`[Timer] updateTurn called: incoming=${incoming}, prev=${prev}`);
+
+        if (incoming !== prev) {
+            // record & update UI
+            this.currentTurnId = incoming;
+            this.playerTurnEl.textContent = data.current_turn_name;
+
+            // if it’s now *your* turn, start; else stop
+            if (incoming === this.playerId) {
+                console.log("[Timer] You gained the turn — starting timer");
+                this._startTimer();
+            } else {
+                console.log("[Timer] You lost the turn — clearing timer");
+                this._stopTimer();
+            }
+        } else {
+            console.log("[Timer] Turn unchanged — leaving timer running");
+        }
+    }
 
 
 }

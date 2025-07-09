@@ -160,6 +160,8 @@ def get_match_state(request, match_id):
     return Response({
         "match_id":            match.id,
         "is_active":           match.is_active,
+        "game_over":         not match.is_active,  
+        "winner_id":           match.winner.id              if match.winner else None,   
         "current_turn_id":     match.current_turn.id if match.current_turn else None,
         "current_turn_name":   match.current_turn.user.username if match.current_turn else None,
         "player_one":          p1.user.username,

@@ -1,6 +1,11 @@
 TODO:
-implement timer per turn and checks on the backend
+implement timer per turn checks on the backend and consequences of not playing in time
 
+poll server for match list update
+
+allow user to only create 1 match
+
+bug: check lose message for the loser
 
 ---
 
