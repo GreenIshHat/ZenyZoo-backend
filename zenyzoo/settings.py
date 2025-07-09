@@ -38,6 +38,7 @@ INSTALLED_APPS = [
     'django.contrib.messages',
     'django.contrib.staticfiles',
 	'core',
+    'channels',
     'game.apps.GameConfig'
 ]
 
@@ -69,6 +70,15 @@ TEMPLATES = [
 ]
 
 WSGI_APPLICATION = 'zenyzoo.wsgi.application'
+ASGI_APPLICATION = 'zenyzoo.asgi.application'
+
+
+# settings.py
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
 
 
 # Database
