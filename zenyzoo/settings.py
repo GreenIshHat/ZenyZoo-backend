@@ -22,9 +22,9 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
-DEBUG      = config('DEBUG', default=False, cast=bool)
+DEBUG      =  os.environ.get('DEBUG', default=False)
 
-ALLOWED_HOSTS = config('ALLOWED_HOSTS', default='localhost')
+ALLOWED_HOSTS =  os.environ.get('ALLOWED_HOSTS', default='localhost').split(',')
 
 
 
