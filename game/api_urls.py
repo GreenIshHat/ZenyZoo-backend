@@ -19,7 +19,9 @@ urlpatterns = [
     path('match/create/',    create_open_match,  name='create_open_match'),
     path('match/list-open/', list_open_matches,  name='list_open_matches'),
     path('match/join/',      join_match,         name='join_match'),
-    path('match/<int:match_id>/', get_match_state, name='get_match_state'),
+    path('match/<int:match_id>/',      get_match_state, name='match-detail'),
+    path('match/<int:match_id>/state/', get_match_state, name='match-state'),
+
 
     path('battle-bot/', battle_bot, name='battle_bot'),
     path('move/',       make_move,  name='make_move'),

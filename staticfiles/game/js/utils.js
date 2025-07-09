@@ -1,3 +1,4 @@
+// utils.js
 /**
  * Read Django’s “csrftoken” cookie.
  */
@@ -10,13 +11,11 @@ export function getCSRFToken() {
 /**
  * Helper: fetch + JSON parse + same-origin credentials.
  */
-export function fetchJson(url, options = {}) {
-  return fetch(url, {
+export async function fetchJson(url, options = {}) {
+  const r = await fetch(url, {
     credentials: 'same-origin',
     ...options
-  })
-    .then(r => {
-      if (!r.ok) return r.text().then(t => Promise.reject(t));
-      return r.json();
-    });
+  });
+  if (!r.ok) return r.text().then(t => Promise.reject(t));
+  return await r.json();
 }

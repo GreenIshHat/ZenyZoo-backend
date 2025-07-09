@@ -29,11 +29,14 @@
     {# force Django to set CSRF cookie #}
     <form id="csrf-form" style="display:none;">{% csrf_token %}</form>
     <div id="score-bar" style="margin-bottom:8px;"></div>
-    <div id="winner-banner" style="display:none;…"></div>
+    <div id="winner-banner" style="display:none;"></div>
+
     <div id="info-bar">
       <strong>Current Turn:</strong>
       <span id="player-turn">Loading…</span>
+      &nbsp;&nbsp;<small><span id="timer-display"></span></small>
     </div>
+
     <div id="battle-wrapper">
       <div id="game-board" class="grid"></div>
       <div id="player-panel">
@@ -63,8 +66,11 @@
   {% if not match.player_two %}
     {# only poll “waiting for opponent” #}
     <script type="module" src="{% static 'game/js/waiting.js' %}"></script>
-  {% else %}
+    {% else %}
     {# actual battle logic & polling for moves #}
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
     <script type="module" src="{% static 'game/js/main.js' %}"></script>
+
+
   {% endif %}
 {% endblock %}
