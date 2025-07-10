@@ -353,3 +353,22 @@
   to   { opacity: 1; transform: scale(1); }
 }
 
+
+
+#score-bar {
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.score-item {
+  margin: 0 0.25rem;
+}
+
+.score-item strong {
+  font-weight: 600;
+}
+
+.score-sep {
+  color: #888;
+}
+

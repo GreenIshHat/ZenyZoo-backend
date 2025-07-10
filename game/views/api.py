@@ -14,6 +14,7 @@ from game.bots          import load_bot
 from channels.layers    import get_channel_layer
 from asgiref.sync       import async_to_sync
 
+
 # ─── Auth ────────────────────────────────────────────────────────────
 
 @api_view(['POST'])
@@ -438,6 +439,7 @@ def forfeit_match(request):
 
     # re-use your existing state serializer
     from .api import get_match_state  # DRF view
+    from django.test import RequestFactory
     fake_req = RequestFactory().get(f"/game/api/match/{match.id}/state/")
     state = get_match_state(fake_req, match_id=match.id).data
 
