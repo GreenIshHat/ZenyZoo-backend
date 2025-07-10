@@ -1,7 +1,7 @@
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.db.models import Q, Count
-
+from django.views.generic import TemplateView
 from game.models import Player, PlayerCard, Match, ShopCard
 
 @login_required
@@ -18,6 +18,9 @@ def home_view(request):
         return redirect('choose_battle_deck')
 
     return render(request, 'game/home.html')
+
+class AboutView(TemplateView):
+    template_name = 'game/about.html'
 
 @login_required
 def profile_view(request):

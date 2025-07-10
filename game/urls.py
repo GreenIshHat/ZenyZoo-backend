@@ -6,10 +6,14 @@ from .views.match_views import (
                     match_list_view, join_match, start_match, quick_match,
                     start_bot_match, standings_view
 )
+from .views.game_views import AboutView
 
 urlpatterns = [
     # Home & enforce deck
     path('', home_view, name='home'),
+
+    path('about/', AboutView.as_view(), name='about'),
+
 
     # Profile & Deck selection
     path('profile/',      profile_view,         name='profile_view'),

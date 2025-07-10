@@ -1,8 +1,4 @@
 TODO:
-!: high prio for render bandwitch free plan comply
-resize images or cloudinary integration.
-similar for sound cloud load
-
 implement timer per turn checks on the backend and consequences of not playing in time
 
 poll server for match list update
