@@ -37,21 +37,6 @@
   const myMatches = Array.from(document.querySelectorAll('#your-matches li'))
     .map(li => +li.id.replace('match-', ''));
   const notified = {};
-
-  setInterval(() => {
-    myMatches.forEach(id => {
-      if (notified[id]) return;
-      fetch(`/game/api/match/${id}/`)
-        .then(r => r.json())
-        .then(data => {
-          if (data.player_two) {
-            alert(`⚡️ Player ${data.player_two} joined Match #${id}!`);
-            document.querySelector(`#match-${id} .status`).textContent = 'Joined';
-            notified[id] = true;
-          }
-        });
-    });
-  }, 5000);
 </script>
 
 <script type="module" src="{% static 'game/js/waiting.js' %}"></script>

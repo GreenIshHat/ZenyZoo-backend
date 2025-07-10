@@ -11,6 +11,9 @@ from game.models        import Player, PlayerCard, Match, MatchMove, ShopCard
 from game.utils         import initialize_player_deck, check_flips
 from game.bots          import load_bot
 
+from channels.layers    import get_channel_layer
+from asgiref.sync       import async_to_sync
+
 # ─── Auth ────────────────────────────────────────────────────────────
 
 @api_view(['POST'])
@@ -165,17 +168,23 @@ def get_match_state(request, match_id):
         "current_turn_id":     match.current_turn.id if match.current_turn else None,
         "current_turn_name":   match.current_turn.user.username if match.current_turn else None,
         "player_one":          p1.user.username,
+        "player_one_id":  match.player_one.id,
         "player_two":          p2.user.username if p2 else None,
         "player_two_id":       p2.id if p2 else None,
         "player_two_is_bot":   getattr(p2, "is_bot", False) if p2 else False,
-        "scores": {
+        "named_scores": {
             p1.user.username: p1_score,
             p2.user.username if p2 else "": p2_score
         },
+       "scores": {
+         match.player_one.id: p1_score,
+         match.player_two.id if match.player_two else None: p2_score,
+     },
         "winner":              match.winner.user.username if match.winner else None,
         "last_move_by": last_move.player.id if last_move else None,
         "board":               board
     })
+
 
 # ─── Gameplay ─────────────────────────────────────────────────────────
 
@@ -238,7 +247,32 @@ def make_move(request):
             bot = load_bot(strat, depth=2)
         except ValueError:
             bot = load_bot("random", depth=2)
-        decision = bot.choose_move(match, next_player)
+
+        taken     = {m.position for m in MatchMove.objects.filter(match=match)}
+        max_tries = 9
+        tries     = 0
+        decision  = bot.choose_move(match, next_player)
+
+        # retry until we get a free spot or exhaust tries
+        while decision and decision["position"] in taken and tries < max_tries:
+            decision = bot.choose_move(match, next_player)
+            tries += 1
+
+        if not decision:
+            # bot gives up → you win by forfeit
+            match.is_active = False
+            match.winner    = player
+            match.save()
+            response.update({
+                "game_over":  True,
+                "winner":     player.user.username,
+                "winner_id":  player.id,
+                "bot_move":   None,
+                "bot_flips":  [],
+            })
+            return Response(response)
+
+        # this if could be removed? just plain
         if decision:
             bpos = decision["position"]
             bcard = decision["card"]
@@ -289,7 +323,8 @@ def make_move(request):
         match.winner = winner
         match.save()
         response["game_over"] = True
-        response["winner"] = winner.user.username if winner else "draw"
+        response["winner"]    = winner.user.username if winner else "draw"
+        response["winner_id"] = winner.id              if winner else None
     else:
         # Ongoing
         response["game_over"] = False
@@ -388,6 +423,32 @@ def battle_bot(request):
         "next_turn_id": human.id,
         "next_turn_name": human.user.username
     })
+
+
+@api_view(['POST'])
+@permission_classes([IsAuthenticated])
+def forfeit_match(request):
+    match = get_object_or_404(Match, id=request.data.get("match_id"), is_active=True)
+    player = get_object_or_404(Player, id=request.data.get("player_id"))
+    # opponent wins
+    opponent = match.player_two if player == match.player_one else match.player_one
+    match.is_active = False
+    match.winner    = opponent
+    match.save()
+
+    # re-use your existing state serializer
+    from .api import get_match_state  # DRF view
+    fake_req = RequestFactory().get(f"/game/api/match/{match.id}/state/")
+    state = get_match_state(fake_req, match_id=match.id).data
+
+    # broadcast to group
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        f"match_{match.id}",
+        {"type": "state_update", "data": state}
+    )
+
+    return Response({"forfeited": True})
 
 # ─── Shop ─────────────────────────────────────────────────────────────
 

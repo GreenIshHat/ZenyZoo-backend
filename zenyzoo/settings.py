@@ -33,8 +33,8 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # ).split(",")
 ALLOWED_HOSTS = [
     "zenyzoo-backend.onrender.com",
-    "https://zenyzoo-backend.onrender.com"
-    "localhost:8000",
+    "https://zenyzoo-backend.onrender.com",
+    "localhost",
     "127.0.0.1",
 ]
 

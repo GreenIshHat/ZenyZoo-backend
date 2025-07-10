@@ -4,8 +4,8 @@ from .views.api import (
     register_user, login_user,
     get_player_deck, get_battle_deck, set_battle_deck,
     create_open_match, list_open_matches, join_match, get_match_state,
-    make_move, battle_bot,
-    view_shop, buy_card,
+    make_move, battle_bot, forfeit_match,
+    view_shop, buy_card, 
 )
 
 urlpatterns = [
@@ -22,6 +22,7 @@ urlpatterns = [
     path('match/<int:match_id>/',      get_match_state, name='match-detail'),
     path('match/<int:match_id>/state/', get_match_state, name='match-state'),
 
+    path('match/forfeit/', forfeit_match, name='forfeit_match'),
 
     path('battle-bot/', battle_bot, name='battle_bot'),
     path('move/',       make_move,  name='make_move'),
