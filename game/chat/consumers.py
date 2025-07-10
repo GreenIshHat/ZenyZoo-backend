@@ -1,5 +1,10 @@
-import json
+# game/chat/consumers.py
 from channels.generic.websocket import AsyncWebsocketConsumer
+from channels.db import database_sync_to_async
+from game.models import Match, MatchMove
+import json
+
+
 
 class GlobalChatConsumer(AsyncWebsocketConsumer):
     group_name = "global_chat"

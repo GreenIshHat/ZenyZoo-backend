@@ -8,6 +8,7 @@ from .views.match_views import (
 )
 from .views.game_views import AboutView
 
+
 urlpatterns = [
     # Home & enforce deck
     path('', home_view, name='home'),

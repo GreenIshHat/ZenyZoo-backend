@@ -1,3 +1,7 @@
+# at top of game/match_views.py
+from asgiref.sync      import async_to_sync
+from channels.layers   import get_channel_layer
+
 from django.contrib.auth.decorators import login_required
 from django.shortcuts import render, redirect, get_object_or_404
 from django.contrib.auth.models import User
@@ -5,6 +9,8 @@ from django.utils.crypto import get_random_string
 from django.contrib.auth   import get_user_model
 
 from game.models import Match, Player
+
+
 
 User = get_user_model()
 
@@ -26,6 +32,20 @@ def join_match(request):
     if match.player_two is None:
         match.player_two = get_object_or_404(Player, id=player_id)
         match.save()
+
+        # notify everyone that this match now has a second player
+        channel_layer = get_channel_layer()
+        async_to_sync(channel_layer.group_send)(
+            "match_list",
+            {
+                "type": "match_joined",
+                "data": {
+                    "id":          match.id,
+                    "player_two":  match.player_two.user.username
+                }
+            }
+        )
+
     return redirect('battle_view', match_id=match.id)
 
 @login_required
@@ -39,6 +59,20 @@ def start_match(request):
         current_turn=player,
         is_active=True
     )
+
+    # notify everyone a new match is open
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "match_list",
+        {
+            "type": "match_created",
+            "data": {
+                "id":         match.id,
+                "player_one": match.player_one.user.username
+            }
+        }
+    )
+
     return redirect('battle_view', match_id=match.id)
 
 @login_required
@@ -60,6 +94,20 @@ def quick_match(request):
             current_turn=player,
             is_active=True
         )
+
+    # notify everyone a new match is open
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "match_list",
+        {
+            "type": "match_created",
+            "data": {
+                "id":         match.id,
+                "player_one": match.player_one.user.username
+            }
+        }
+    )
+
     return redirect('battle_view', match_id=match.id)
     
 
