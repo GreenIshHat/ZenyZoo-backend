@@ -1,4 +1,5 @@
 // utils.js
+
 /**
  * Read Django’s “csrftoken” cookie.
  */

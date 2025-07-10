@@ -1,16 +1,74 @@
 TODO:
+!: high prio for render bandwitch free plan comply
+resize images or cloudinary integration.
+similar for sound cloud load
+
 implement timer per turn checks on the backend and consequences of not playing in time
 
 poll server for match list update
 
 allow user to only create 1 match
 
+socks version instead polling for more fluid gameplay
+
 bug: check lose message for the loser
 
-resize images or cloudinary integration.
-similar for sound cloud load
+
 
 ---
+
+Here’s how I’d sequence things, balancing impact vs. effort for an MVP:
+
+---
+
+### 1. **Real-Time Game Flow (High ROI)**
+
+* **WebSocket GameConsumer**
+  *Why:* Instant feedback makes your game feel snappier and more “alive” than polling.
+  *Rough Effort:* Moderate—you already have Channels wired up for chat, so move updates are a natural next step.
+* **In-match Chat Integration**
+  *Why:* Players love to trash-talk or cheer each other on. You’ve built the chat consumer, just surface it in the match view.
+
+### 2. **Polish & UX (Medium ROI)**
+
+* **Mobile/Responsive Layout**
+  *Why:* Even basic media-queries give you 80% of the benefit. Focus on breaking points and larger tap targets.
+  *Rough Effort:* Low—start with CSS grid/flex tweaks and a responsive meta tag.
+* **Sound & Visual SFX**
+  *Why:* A little flip sound + confetti on win goes a long way to “feel” good. You’ve scaffolded sfx modules already.
+* **Rematch Button**
+  *Why:* Keeps the engagement loop tight—“Play again?” immediately after a game.
+
+### 3. **Bots & AI (Medium–Low ROI)**
+
+* **Minimax/Alpha-Beta Tier**
+  *Why:* You already have the RandomBot; wrapping in deeper search is a nice “hard” mode.
+  *Rough Effort:* Moderate—algorithm work but little UI.
+
+### 4. **Server-Enforced Timer (Lower ROI)**
+
+* **Why:** Guarantees pace, but for MVP you can get by with a front-end countdown and a soft forfeit.
+* **When:** Tackle this once your real-time WS loop is solid.
+
+### 5. **Game Replays & Analytics (Lowest ROI)**
+
+* **Why:** Cool for power users and demos, but not essential to your first public launch.
+* **When:** After core loop + social/UX polish.
+
+---
+
+**Your Next Steps:**
+
+1. Swap out polling → WS for moves
+2. Embed the existing chat into the battle page
+3. Tackle responsive CSS (media-queries, touch targets)
+4. Hook up SFX/confetti/rematch UX
+
+That combo will give you a *super* engaging, immediate-feel multiplayer experience—strong enough to show off on Product Hunt—before investing in heavier features like replays or strict server timers.
+
+
+***
+
 
 Today’s progress recap & outstanding items
 

@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
+# for render start command: chmod +x deploy.sh && ./deploy.sh
 set -e
 
 pwd
-# cd zenyzoo
 
 echo "[startup] applying migrations"
 python manage.py migrate --no-input

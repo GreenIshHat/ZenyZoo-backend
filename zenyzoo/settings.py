@@ -10,10 +10,12 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.2/ref/settings/
 """
 
-from pathlib import Path
 import os
+from pathlib import Path
+import dj_database_url
 
-SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-development-secret')
+
+SECRET_KEY = os.environ.get('SECRET_KEY', 'fallback-devesdfhgrtdfgh453634lopment-secret')
 DEBUG      =  os.environ.get('DEBUG', default=False)
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -64,6 +66,7 @@ MIDDLEWARE = [
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    'whitenoise.middleware.WhiteNoiseMiddleware',
 ]
 
 ROOT_URLCONF = 'zenyzoo.urls'
@@ -105,13 +108,12 @@ DATABASES = {
     }
 }
 
-# Override with DATABASE_URL if present
-DATABASE_URL = os.environ.get("DATABASE_URL")
-if DATABASE_URL:
-    DATABASES["default"] = dj_database_url.parse(
-        DATABASE_URL,
-        conn_max_age=600,      # persistent connections
-        ssl_require=True       # if your provider uses SSL
+# If you have a DATABASE_URL env var, override the default
+if os.environ.get('DATABASE_URL'):
+    DATABASES['default'] = dj_database_url.parse(
+        os.environ['DATABASE_URL'],
+        conn_max_age=600,       # keep connections open up to 10 minutes
+        ssl_require=True        # enforce SSL if your host supports it
     )
 
 # Password validation
@@ -148,22 +150,32 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/5.2/howto/static-files/
 
-# Where `collectstatic` will dump all collected files
-STATIC_ROOT = BASE_DIR / "staticfiles"
 STATIC_URL  = "/static/"
 
-# STATICFILES_DIRS = [
-#     BASE_DIR / "game" / "static",
-# ]
+STATICFILES_DIRS = [
+    BASE_DIR / "game" / "static",
+]
+# Where `collectstatic` will dump all collected files
+STATIC_ROOT = BASE_DIR / "staticfiles"
+
+STATICFILES_STORAGE = 'whitenoise.storage.CompressedManifestStaticFilesStorage'
+
 
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# 1) Your Cloudflare Pages domain for assets:
+#    NOTE: this should point at the root of your `cloud_statics` directory
+CDN_URL = os.environ.get(
+    "CDN_URL",
+    "https://zeny-zoo-assets.pages.dev/cloud_statics"
+)
 
-MEDIA_URL = '/media/'
-MEDIA_ROOT = BASE_DIR / 'media'
+
+MEDIA_URL = CDN_URL + '/media/'
+MEDIA_ROOT = CDN_URL + '/media/' # BASE_DIR / 'media' #
 
 LOGIN_URL = '/game/login/'
 
@@ -173,3 +185,6 @@ LOGOUT_REDIRECT_URL = '/game/login/'
 
 
 
+
+# Example for decks:
+# DEFAULT_DECK_IMAGE_PATH = f"{CDN_URL}/deck/{{filename}}"

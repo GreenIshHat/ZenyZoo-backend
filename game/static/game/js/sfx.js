@@ -1,12 +1,16 @@
 // static/game/js/sfx.js
 
 // Preload audio assets
-const bgAudio   = new Audio("/static/game/sfx/background.mp3");
-const flipAudio = new Audio("/static/game/sfx/flip.ogg");
-const placeAudio= new Audio("/static/game/sfx/play.ogg");
-const botAudio  = new Audio("/static/game/sfx/play.ogg");
-const winAudio  = new Audio("/static/game/sfx/win.ogg");
-const loseAudio  = new Audio("/static/game/sfx/lose.ogg");
+// old routes : ("/static/game/sfx/background.mp3");
+// fallback to same-origin if CDN_URL isn’t defined
+const BASE = window.CDN_URL || "https://zeny-zoo-assets.pages.dev/cloud_statics";
+
+export const bgAudio    = new Audio(`${BASE}/sfx/background.mp3`);
+export const flipAudio  = new Audio(`${BASE}/sfx/flip.ogg`);
+export const placeAudio = new Audio(`${BASE}/sfx/play.ogg`);
+export const botAudio   = new Audio(`${BASE}/sfx/play.ogg`);   // bot.ogg if you have a separate bot sound
+export const winAudio   = new Audio(`${BASE}/sfx/win.ogg`);
+export const loseAudio  = new Audio(`${BASE}/sfx/lose.ogg`);
 
 let _bgAudio = null;
 
