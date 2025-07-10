@@ -34,7 +34,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 ALLOWED_HOSTS = [
     "zenyzoo-backend.onrender.com",
     "https://zenyzoo-backend.onrender.com"
-    "localhost",
+    "localhost:8000",
     "127.0.0.1",
 ]
 
