@@ -134,49 +134,81 @@ async init() {
         this.lastPlays.clear();
         this.playedCardIds.clear();
         boardArr.forEach(mv => this._placeMove(mv));
+        document.getElementById('move-spinner').style.display = "none";
     }
 
 async makeMove(position) {
     if (!this.selectedCardId || this.gameOver) return;
-    const cd = this.cardDataMap[this.selectedCardId];
-    const move = {
-        position,
-        player_id:      this.playerId,
-        player_card_id: this.selectedCardId,
-        template_card_id: cd.template_card_id,
-        card_name:      cd.name,
-        image:          cd.image,
-        card_top:       cd.stats.top,
-        card_right:     cd.stats.right,
-        card_bottom:    cd.stats.bottom,
-        card_left:      cd.stats.left,
-        // **NEW**: include optimistic color for immediate UI styling
-        color: this.playerColors[this.playerId]
-    };
-    this._placeMove(move);
-    greyOutCardElement(this.selectedCardId);
+
+    // 1. Grey out hand/input
+    this.handEl.classList.add("waiting-for-server");
+    this.inputLocked = true;
 
     const payload = { match_id: this.matchId, player_id: this.playerId, card_id: this.selectedCardId, position };
-    if (this.socket?.readyState === WebSocket.OPEN) {
-        this.socket.send(JSON.stringify({ type: "move", payload }));
-    } else {
-        try {
+
+    try {
+        if (this.socket?.readyState === WebSocket.OPEN) {
+            document.getElementById('move-spinner').style.display = "flex";
+            this.socket.send(JSON.stringify({ type: "move", payload }));
+        } else {
+            // fallback to fetch
             const full = await fetchJson(this.stateUrl);
             this._renderFullBoard(full.board);
             this._updateScores(this._formatScores(full));
             this.updateTurn(full);
-        } catch (err) {
-            console.error("Move failed:", err);
         }
+    } catch (err) {
+        console.error("Move failed:", err);
+    } finally {
+        // Always clear
+        this.selectedCardId = null;
+        this.handEl.classList.remove("waiting-for-server");
+        this.inputLocked = false;
     }
-    this.selectedCardId = null;
 }
 
+// async optimistic_makeMove(position) {
+//     if (!this.selectedCardId || this.gameOver) return;
+//     const cd = this.cardDataMap[this.selectedCardId];
+//     const move = {
+//         position,
+//         player_id:      this.playerId,
+//         player_card_id: this.selectedCardId,
+//         template_card_id: cd.template_card_id,
+//         card_name:      cd.name,
+//         image:          cd.image,
+//         card_top:       cd.stats.top,
+//         card_right:     cd.stats.right,
+//         card_bottom:    cd.stats.bottom,
+//         card_left:      cd.stats.left,
+//         // **NEW**: include optimistic color for immediate UI styling
+//         color: this.playerColors[this.playerId]
+//     };
+//     this._placeMove(move);
+//     greyOutCardElement(this.selectedCardId);
 
-    onCellClick(evt) {
-        if (this.gameOver || evt.target.closest(".card.used") || this.currentTurnId !== this.playerId) return;
-        this.makeMove(+evt.currentTarget.dataset.position);
-    }
+//     const payload = { match_id: this.matchId, player_id: this.playerId, card_id: this.selectedCardId, position };
+//     if (this.socket?.readyState === WebSocket.OPEN) {
+//         this.socket.send(JSON.stringify({ type: "move", payload }));
+//     } else {
+//         try {
+//             const full = await fetchJson(this.stateUrl);
+//             this._renderFullBoard(full.board);
+//             this._updateScores(this._formatScores(full));
+//             this.updateTurn(full);
+//         } catch (err) {
+//             console.error("Move failed:", err);
+//         }
+//     }
+//     this.selectedCardId = null;
+// }
+
+
+onCellClick(evt) {
+    if (this.inputLocked || this.gameOver || evt.target.closest(".card.used") || this.currentTurnId !== this.playerId) return;
+    this.makeMove(+evt.currentTarget.dataset.position);
+}
+
 
     updateTurn(data) {
         const incoming = Number(data.current_turn_id);
@@ -206,16 +238,33 @@ async makeMove(position) {
         this.socket.onerror = e => console.error("WS error", e);
     }
 
-    _handleGameOver(winnerId) {
-        this.gameOver = true;
-        sfx.stopBackground();
-        this.timer.stop();
+_handleGameOver(winnerId) {
+    this.gameOver = true;
+    sfx.stopBackground();
+    this.timer.stop();
+
+    // Determine spectator or player
+    const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
+
+    let msg;
+    if (isSpectator) {
+        msg = winnerId === null
+            ? "🤝 Draw!"
+            : `🏁 Game Over – Winner: ${window.opponentName || "Unknown"}`;
+    } else {
         const win = winnerId === this.playerId;
-        this.banner.textContent = win ? "🎉 You win!" : winnerId === null ? "🤝 Draw!" : "😢 You lose!";
-        this.banner.style.display = "block";
-        if (win) sfx.fireConfetti();
-        this.socket.close();
+        msg = win
+            ? "🎉 You win!"
+            : winnerId === null
+                ? "🤝 Draw!"
+                : "😢 You lose!";
     }
+
+    this.banner.textContent = msg;
+    this.banner.style.display = "block";
+    if (!isSpectator && winnerId === this.playerId) sfx.fireConfetti();
+    this.socket.close();
+}
 
     async handleForfeit() {
         if (this.gameOver) return;

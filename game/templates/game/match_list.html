@@ -15,19 +15,27 @@
 </ul>
 
 <ul class="match-list not-battle" id="matches-row">
-  {% for match in open_matches %}
-  <li class="match-item">
-    <a href="{% url 'battle_view' match.id %}">
-      Match #{{ match.id }} – Host: {{ match.player_one.user.username }}
-    </a>
-  </li>
+  {% for m in open_matches %}
+    <li class="match-item">
+      <span>
+        Match #{{ m.id }} –
+        Host: {{ m.player_one.user.username }}
+        {% if m.player_two %}
+          vs. {{ m.player_two.user.username }}
+          <a href="{% url 'battle_view' m.id %}">Watch as Spectator</a>
+        {% else %}
+          <a href="{% url 'battle_view' m.id %}">Join as Player</a>
+        {% endif %}
+        <small>(created {{ m.since }} ago)</small>
+      </span>
+    </li>
   {% empty %}
-  <li class="match-item">
-    <p>No open matches. </p>
-  </li>
-  <!-- Example: front-end view start_match -->
+    <li class="match-item">
+      <p>No open matches. </p>
+    </li>
   {% endfor %}
 </ul>
+
 
 <a href="{% url 'start_match' %}">Create match</a> now.
 

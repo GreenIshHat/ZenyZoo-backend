@@ -96,8 +96,11 @@ def battle_view(request, match_id):
         match.player_two = player
         match.save()
 
+    # Not a player if not p1 or p2
+    is_spectator = not (player and (player == match.player_one or player == match.player_two))
     return render(request, 'game/battle.html', {
         'match': match,
+        'is_spectator': is_spectator,
         # For backwards compatibility you can still expose match_id:
         'match_id': match.id,
     })
