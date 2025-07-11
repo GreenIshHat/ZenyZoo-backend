@@ -29,7 +29,7 @@ class Timer {
         this.displayEl.textContent = "";
     }
     _updateDisplay() {
-        this.displayEl.textContent = `00:${String(this.remaining).padStart(2,'0')}`;
+        this.displayEl.textContent = `00:${String(this.remaining).padStart(2, '0')}`;
     }
 }
 
@@ -48,51 +48,51 @@ export class GameController {
         this.init();
     }
 
-async init() {
-    loadBoard(this.boardEl, this.onCellClick.bind(this));
-    this.cellMap = {};
-    this.boardEl.querySelectorAll(".cell").forEach(c => {
-        this.cellMap[+c.dataset.position] = c;
-    });
+    async init() {
+        loadBoard(this.boardEl, this.onCellClick.bind(this));
+        this.cellMap = {};
+        this.boardEl.querySelectorAll(".cell").forEach(c => {
+            this.cellMap[+c.dataset.position] = c;
+        });
 
-    const deck = await initDeck({
-        playerId: this.playerId,
-        container: this.handEl,
-        onCardSelect: id => this.selectedCardId = id
-    });
-    deck.forEach(cd => this.cardDataMap[cd.player_card_id] = cd);
+        const deck = await initDeck({
+            playerId: this.playerId,
+            container: this.handEl,
+            onCardSelect: id => this.selectedCardId = id
+        });
+        deck.forEach(cd => this.cardDataMap[cd.player_card_id] = cd);
 
-    try {
-        const init = await fetchJson(this.stateUrl);
-        this.playerNamesById[init.player_one_id] = init.player_one;
-        this.playerNamesById[init.player_two_id] = init.player_two;
+        try {
+            const init = await fetchJson(this.stateUrl);
+            this.playerNamesById[init.player_one_id] = init.player_one;
+            this.playerNamesById[init.player_two_id] = init.player_two;
 
-        // **NEW**: map each player’s ID to their color
-        this.playerColors = {
-            [init.player_one_id]: '#1f77b4',
-            [init.player_two_id]: '#ff7f0e'
-        };
+            // **NEW**: map each player’s ID to their color
+            this.playerColors = {
+                [init.player_one_id]: '#1f77b4',
+                [init.player_two_id]: '#ff7f0e'
+            };
 
-        this._updateScores(this._formatScores(init));
-        this._renderFullBoard(init.board || []);
-        this.updateTurn(init);
+            this._updateScores(this._formatScores(init));
+            this._renderFullBoard(init.board || []);
+            this.updateTurn(init);
 
-        if (init.forfeited) {
-            this.gameOver = true;
-            sfx.stopBackground();
-            this.timer.stop();
-            this.banner.textContent = `⌛ ${init.winner} forfeited.`;
-            this.banner.style.display = "block";
+            if (init.forfeited) {
+                this.gameOver = true;
+                sfx.stopBackground();
+                this.timer.stop();
+                this.banner.textContent = `⌛ ${init.winner} forfeited.`;
+                this.banner.style.display = "block";
+            }
+        } catch (e) {
+            console.error("Initial load failed:", e);
         }
-    } catch (e) {
-        console.error("Initial load failed:", e);
-    }
 
-    sfx.playBackground();
-    this.socketUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/match/${this.matchId}/`;
-    this.reconnectDelay = 1000;
-    this._connectSocket();
-}
+        sfx.playBackground();
+        this.socketUrl = `${window.location.protocol === 'https:' ? 'wss' : 'ws'}://${window.location.host}/ws/match/${this.matchId}/`;
+        this.reconnectDelay = 1000;
+        this._connectSocket();
+    }
 
 
     _formatScores(data) {
@@ -134,88 +134,93 @@ async init() {
         this.lastPlays.clear();
         this.playedCardIds.clear();
         boardArr.forEach(mv => this._placeMove(mv));
-        
+
         const deckEl = document.getElementById('move-spinner');
         if (deckEl) {
             document.getElementById('move-spinner').style.display = "none";
         }
     }
 
-async makeMove(position) {
-    if (!this.selectedCardId || this.gameOver) return;
+    async makeMove(position) {
+        if (!this.selectedCardId || this.gameOver) return;
 
-    // 1. Grey out hand/input
-    this.handEl.classList.add("waiting-for-server");
-    this.inputLocked = true;
+        // 1. Grey out hand/input
+        this.handEl.classList.add("waiting-for-server");
+        this.inputLocked = true;
 
-    const payload = { match_id: this.matchId, player_id: this.playerId, card_id: this.selectedCardId, position };
+        const payload = { match_id: this.matchId, player_id: this.playerId, card_id: this.selectedCardId, position };
 
-    try {
-        if (this.socket?.readyState === WebSocket.OPEN) {
-            document.getElementById('move-spinner').style.display = "flex";
-            this.socket.send(JSON.stringify({ type: "move", payload }));
-        } else {
-            // fallback to fetch
-            const full = await fetchJson(this.stateUrl);
-            this._renderFullBoard(full.board);
-            this._updateScores(this._formatScores(full));
-            this.updateTurn(full);
+        try {
+            if (this.socket?.readyState === WebSocket.OPEN) {
+
+                const deckEl = document.getElementById('move-spinner');
+                if (deckEl) {
+                    document.getElementById('move-spinner').style.display = "flex";
+                }
+
+                this.socket.send(JSON.stringify({ type: "move", payload }));
+            } else {
+                // fallback to fetch
+                const full = await fetchJson(this.stateUrl);
+                this._renderFullBoard(full.board);
+                this._updateScores(this._formatScores(full));
+                this.updateTurn(full);
+            }
+        } catch (err) {
+            console.error("Move failed:", err);
+        } finally {
+            // Always clear
+            this.selectedCardId = null;
+            this.handEl.classList.remove("waiting-for-server");
+            this.inputLocked = false;
         }
-    } catch (err) {
-        console.error("Move failed:", err);
-    } finally {
-        // Always clear
-        this.selectedCardId = null;
-        this.handEl.classList.remove("waiting-for-server");
-        this.inputLocked = false;
     }
-}
 
-// async optimistic_makeMove(position) {
-//     if (!this.selectedCardId || this.gameOver) return;
-//     const cd = this.cardDataMap[this.selectedCardId];
-//     const move = {
-//         position,
-//         player_id:      this.playerId,
-//         player_card_id: this.selectedCardId,
-//         template_card_id: cd.template_card_id,
-//         card_name:      cd.name,
-//         image:          cd.image,
-//         card_top:       cd.stats.top,
-//         card_right:     cd.stats.right,
-//         card_bottom:    cd.stats.bottom,
-//         card_left:      cd.stats.left,
-//         // **NEW**: include optimistic color for immediate UI styling
-//         color: this.playerColors[this.playerId]
-//     };
-//     this._placeMove(move);
-//     greyOutCardElement(this.selectedCardId);
+    // async optimistic_makeMove(position) {
+    //     if (!this.selectedCardId || this.gameOver) return;
+    //     const cd = this.cardDataMap[this.selectedCardId];
+    //     const move = {
+    //         position,
+    //         player_id:      this.playerId,
+    //         player_card_id: this.selectedCardId,
+    //         template_card_id: cd.template_card_id,
+    //         card_name:      cd.name,
+    //         image:          cd.image,
+    //         card_top:       cd.stats.top,
+    //         card_right:     cd.stats.right,
+    //         card_bottom:    cd.stats.bottom,
+    //         card_left:      cd.stats.left,
+    //         // **NEW**: include optimistic color for immediate UI styling
+    //         color: this.playerColors[this.playerId]
+    //     };
+    //     this._placeMove(move);
+    //     greyOutCardElement(this.selectedCardId);
 
-//     const payload = { match_id: this.matchId, player_id: this.playerId, card_id: this.selectedCardId, position };
-//     if (this.socket?.readyState === WebSocket.OPEN) {
-//         this.socket.send(JSON.stringify({ type: "move", payload }));
-//     } else {
-//         try {
-//             const full = await fetchJson(this.stateUrl);
-//             this._renderFullBoard(full.board);
-//             this._updateScores(this._formatScores(full));
-//             this.updateTurn(full);
-//         } catch (err) {
-//             console.error("Move failed:", err);
-//         }
-//     }
-//     this.selectedCardId = null;
-// }
+    //     const payload = { match_id: this.matchId, player_id: this.playerId, card_id: this.selectedCardId, position };
+    //     if (this.socket?.readyState === WebSocket.OPEN) {
+    //         this.socket.send(JSON.stringify({ type: "move", payload }));
+    //     } else {
+    //         try {
+    //             const full = await fetchJson(this.stateUrl);
+    //             this._renderFullBoard(full.board);
+    //             this._updateScores(this._formatScores(full));
+    //             this.updateTurn(full);
+    //         } catch (err) {
+    //             console.error("Move failed:", err);
+    //         }
+    //     }
+    //     this.selectedCardId = null;
+    // }
 
 
-onCellClick(evt) {
-    if (this.currentTurnId !== this.playerId) {
-        alert("Wait your turn!");
-        return;
+    onCellClick(evt) {
+        if (this.currentTurnId !== this.playerId) {
+            alert("Wait your turn!");
+            return;
+        }
+        if (this.inputLocked || this.gameOver || evt.target.closest(".card.used") || this.currentTurnId !== this.playerId) return;
+        this.makeMove(+evt.currentTarget.dataset.position);
     }
-    if (this.inputLocked || this.gameOver || evt.target.closest(".card.used") || this.currentTurnId !== this.playerId) return;
-    this.makeMove(+evt.currentTarget.dataset.position);
-}
 
 
     updateTurn(data) {
@@ -246,35 +251,35 @@ onCellClick(evt) {
         this.socket.onerror = e => console.error("WS error", e);
     }
 
-_handleGameOver(winnerId) {
-    this.gameOver = true;
-    sfx.stopBackground();
-    this.timer.stop();
-    // const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
+    _handleGameOver(winnerId) {
+        this.gameOver = true;
+        sfx.stopBackground();
+        this.timer.stop();
+        // const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
 
 
-  
-    const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
 
-let msg;
-if (isSpectator) {
-    msg = winnerId === null
-        ? "🤝 Draw!"
-        : `🏁 Game Over – Winner: ${window.opponentName || "Unknown"}`;
-} else {
-    const win = winnerId === this.playerId;
-    msg = win
-        ? "🎉 You win!"
-        : winnerId === null
-            ? "🤝 Draw!"
-            : "😢 You lose!";
-}
+        const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
 
-    this.banner.textContent = msg;
-    this.banner.style.display = "block";
-    if (!isSpectator && winnerId === this.playerId) sfx.fireConfetti();
-    this.socket.close();
-}
+        let msg;
+        if (isSpectator) {
+            msg = winnerId === null
+                ? "🤝 Draw!"
+                : `🏁 Game Over – Winner: ${window.opponentName || "Unknown"}`;
+        } else {
+            const win = winnerId === this.playerId;
+            msg = win
+                ? "🎉 You win!"
+                : winnerId === null
+                    ? "🤝 Draw!"
+                    : "😢 You lose!";
+        }
+
+        this.banner.textContent = msg;
+        this.banner.style.display = "block";
+        if (!isSpectator && winnerId === this.playerId) sfx.fireConfetti();
+        this.socket.close();
+    }
 
 
     async handleForfeit() {
