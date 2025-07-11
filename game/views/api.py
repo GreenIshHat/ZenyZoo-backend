@@ -128,6 +128,7 @@ def join_match(request):
     player = get_object_or_404(Player, id=request.data.get("player_id"))
     match.player_two = player
     match.save()
+    on_player_joined(match)   # <— Notify the channel layer here
     return Response({"match_id": match.id, "message": "Joined match"})
 
 

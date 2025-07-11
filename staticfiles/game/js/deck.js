@@ -8,6 +8,8 @@ import { makeCard } from "./ui.js";
  * Returns the array of card-data objects for later use.
  */
 export async function initDeck({ playerId, container, onCardSelect }) {
+  if (window.isSpectator) return;  // Skip deck loading for spectators
+
   // 1) Fetch from your API
   const data = await fetchJson(`/game/api/battle-deck/${playerId}/`);
   
