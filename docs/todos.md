@@ -3,13 +3,22 @@ implement timer per turn checks on the backend and consequences of not playing i
 
 poll server for match list update
 
-allow user to only create 1 match
+adjust image resizes for 16/9 screens. 
+UI prettify. responsive / mobile viewports
 
 socks version instead polling for more fluid gameplay
 
 bug: check lose message for the loser
 
+stat: active player5 now. (last hour?)
 
+--allow user to only create 1 match
+
+--chat vs players *and bot w deepseek api
+
+--favicon on local (works deployed)
+
+**think web3 and tokenomics
 
 ---
 
