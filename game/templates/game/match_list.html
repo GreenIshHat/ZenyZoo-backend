@@ -15,33 +15,33 @@
 </ul>
 
 <ul class="match-list not-battle" id="matches-row">
-  {% for m in open_matches %}
-<li class="match-item">
-  <span>
-    Match #{{ m.id }} –
-    Host: {{ m.player_one.user.username }}
-    {% if m.player_two %}
-      vs. {{ m.player_two.user.username }}
-      <a href="{% url 'battle_view' m.id %}">Watch as Spectator</a>
-    {% else %}
-      {% if m.player_one.user == request.user %}
-        <a href="{% url 'battle_view' m.id %}">Go to your game</a>
-      {% else %}
-        <a href="{% url 'battle_view' m.id %}">Join as Player</a>
-      {% endif %}
-    {% endif %}
-    <small>(created {{ m.since }} ago)</small>
-  </span>
-</li>
-
+  {% if open_matches %}
+    {% for m in open_matches %}
+      <li class="match-item">
+        <span>
+          Match #{{ m.id }} –
+          Host: {{ m.player_one.user.username }}
+          {% if m.player_two %}
+            vs. {{ m.player_two.user.username }}
+            <a href="{% url 'battle_view' m.id %}">Watch as Spectator</a>
+            {% elif m.player_one.user == request.user %}
+  <span>Your match (waiting for player)</span>
+          {% else %}
+            <a href="{% url 'battle_view' m.id %}">Join as Player</a>
+          {% endif %}
+          <small>(created {{ m.since }} ago)</small>
+        </span>
+      </li>
+    {% endfor %}
+  {% else %}
     <li class="match-item">
-      <p>No open matches. </p>
+      <p>No open matches.</p>
     </li>
-  {% endfor %}
+  {% endif %}
 </ul>
 
-
 <a href="{% url 'start_match' %}">Create match</a> now.
+
 
 
 
