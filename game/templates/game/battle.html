@@ -4,73 +4,119 @@
 {% block title %}Battle Arena{% endblock %}
 
 {% block content %}
-  <h1>Zenyzoo: Match #{{ match.id }}</h1>
 
-  {% if not match.player_two %}
-    <p>Waiting for an opponent…</p>
-    <p>
-      <a href="{% url 'start_bot_match' match.id %}?difficulty=random">
-        Play vs Bot (Easy – RamBot)
-      </a>
-      &nbsp;|&nbsp;
-      <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
-        Play vs Bot (Medium – Maxie)
-      </a>
-      &nbsp;|&nbsp;
-      <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
-        Play vs Bot (Hard – BrainBot)
-      </a>
-      <!-- &nbsp;|&nbsp;
+<style>
+  .spectator-banner {
+    background: #232b3d;
+    color: #ffd700;
+    border-radius: 4px;
+    padding: 0.5em 1em;
+    margin-bottom: 1em;
+    text-align: center;
+    font-weight: bold;
+    letter-spacing: 0.03em;
+  }
+
+  .spinner {
+  border: 4px solid #222; border-top: 4px solid #00d4ff;
+  border-radius: 50%; width: 36px; height: 36px;
+  animation: spin 1s linear infinite; margin: auto;
+}
+@keyframes spin { 100% { transform: rotate(360deg); } }
+#move-spinner {
+  position: absolute; left: 0; top: 0; right: 0; bottom: 0;
+  background: rgba(15, 19, 34, 0.83);
+  color: #fff; display: flex; flex-direction: column; align-items: center; justify-content: center;
+  z-index: 99;
+}
+
+</style>
+
+
+<h1>Zenyzoo: Match #{{ match.id }}</h1>
+
+{% if not match.player_two %}
+<p>Waiting for an opponent…</p>
+<p>
+  <a href="{% url 'start_bot_match' match.id %}?difficulty=random">
+    Play vs Bot (Easy – RamBot)
+  </a>
+  &nbsp;|&nbsp;
+  <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
+    Play vs Bot (Medium – Maxie)
+  </a>
+  &nbsp;|&nbsp;
+  <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
+    Play vs Bot (Hard – BrainBot)
+  </a>
+  <!-- &nbsp;|&nbsp;
       <a href="{% url 'start_bot_match' match.id %}?difficulty=alphabeta">
         Play vs Bot (Hard – AlphaBeta)
       </a> -->
-    </p>
-  {% else %}
-    {# force Django to set CSRF cookie #}
-    <form id="csrf-form" style="display:none;">{% csrf_token %}</form>
-    <div id="score-bar" style="margin-bottom:8px;"></div>
-    <div id="winner-banner" style="display:none;"></div>
+</p>
+{% else %}
+{# force Django to set CSRF cookie #}
+<form id="csrf-form" style="display:none;">{% csrf_token %}</form>
+<div id="score-bar" style="margin-bottom:8px;"></div>
+<div id="winner-banner" style="display:none;"></div>
 
-    <div id="info-bar">
-      <strong>Current Turn:</strong>
-      <span id="player-turn">Loading…</span>
-      &nbsp;&nbsp;<small><span id="timer-display"></span></small>
-    </div>
-
-    <div id="battle-wrapper">
-      <div id="game-board" class="grid"></div>
-      <div id="player-panel">
-        <h2>Your Deck</h2>
-        <div id="player-deck" class="deck"></div>
-      </div>
-    </div>
+<div id="info-bar">
+  {% if is_spectator %}
+  <div class="spectator-banner">
+    👁️ You are watching as <b>Spectator</b>
+  </div>
   {% endif %}
+
+  <strong>Current Turn:</strong>
+  <span id="player-turn">Loading…</span>
+  &nbsp;&nbsp;<small><span id="timer-display"></span></small>
+</div>
+
+<div id="battle-wrapper">
+  <div id="game-board" class="grid"></div>
+
+<div id="player-panel" class="{% if is_spectator %}hidden{% endif %}">
+  <div id="move-spinner" style="display:none;">
+  <div class="spinner"></div>
+  <div>Waiting for server…</div>
+</div>
+
+  <h2>Your Deck</h2>
+  <div id="player-deck" class="deck"></div>
+</div>
+
+
+</div>
+
+{% endif %}
+
+{% include 'includes/battle_chat.html' %}
 {% endblock %}
 
 {% block scripts %}
-  <script>
-    window.playerId    = {{ request.user.player.id }};
-    window.yourName    = "{{ request.user.username }}";
-    window.matchId     = {{ match.id }};
-    {% if match.player_two %}
-      window.opponentId   = {{ match.player_two.id }};
-      window.opponentName = "{{ match.player_two.user.username }}";
-      window.isBotMatch   = {{ match.player_two.is_bot|yesno:"true,false" }};
-    {% else %}
-      window.opponentId   = null;
-      window.opponentName = null;
-      window.isBotMatch   = false;
-    {% endif %}
-  </script>
-
-  {% if not match.player_two %}
-    {# only poll “waiting for opponent” #}
-    <script type="module" src="{% static 'game/js/waiting.js' %}"></script>
-    {% else %}
-    {# actual battle logic & polling for moves #}
-    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
-    <script type="module" src="{% static 'game/js/main.js' %}"></script>
-
-
+<script>
+  window.playerId = {{ request.user.player.id }};
+  window.yourName = "{{ request.user.username }}";
+  window.matchId = {{ match.id }};
+  {% if match.player_two %}
+  window.opponentId = {{ match.player_two.id }};
+  window.opponentName = "{{ match.player_two.user.username }}";
+  window.isBotMatch = {{ match.player_two.is_bot | yesno:"true,false" }};
+  {% else %}
+  window.opponentId = null;
+  window.opponentName = null;
+  window.isBotMatch = false;
   {% endif %}
+</script>
+
+{% if not match.player_two %}
+{# only poll “waiting for opponent” #}
+<script type="module" src="{% static 'game/js/waiting.js' %}"></script>
+{% else %}
+{# actual battle logic & polling for moves #}
+<script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
+<script type="module" src="{% static 'game/js/main.js' %}"></script>
+
+
+{% endif %}
 {% endblock %}

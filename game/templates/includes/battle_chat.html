@@ -1,0 +1,13 @@
+{% load static %}
+
+
+{% comment %} Battle Chat Partial {% endcomment %}
+<div id="battle-chat" class="chat-container" data-match-id="{{ match.id }}">
+  <h3 class="chat-title">Match Chat</h3>
+  <div id="chat-log-match" class="chat-log"></div>
+  <div class="chat-input-group">
+    <input id="chat-message-input-match" class="chat-input" type="text" placeholder="Type a message..." />
+    <button id="chat-send-btn-match" class="chat-send-btn">Send</button>
+  </div>
+</div>
+<script type="module" src="{% static 'game/js/match_chat.js' %}"></script>

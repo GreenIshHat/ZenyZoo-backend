@@ -174,6 +174,7 @@ def execute_bot_move(match, bot_player):
         return move_info, flips
     return None, []
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def make_move(request):
@@ -216,6 +217,7 @@ def make_move(request):
         if match.winner is None:
             match.winner = p1 if p1_score > p2_score else p2
         match.is_active = False
+        match.is_finished = True
         match.save()
     response = {
         "flips": flips,
@@ -262,6 +264,7 @@ def forfeit_match(request):
     player = get_object_or_404(Player, id=request.data.get("player_id"))
     opponent = match.player_two if player == match.player_one else match.player_one
     match.is_active = False
+    match.is_finished = True
     match.winner = opponent
     match.save()
     state = MatchStateSerializer(match).data

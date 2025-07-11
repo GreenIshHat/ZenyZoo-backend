@@ -1,25 +1,16 @@
-{% comment %} Place this at game/templates/includes/chat.html {% endcomment %}
+// match_chat.js
 
-
-<div id="global-chat" class="chat-container">
-  <h3 class="chat-title">Global Chat</h3>
-  <div id="chat-log" class="chat-log"></div>
-  <div class="chat-input-group">
-    <input id="chat-message-input" class="chat-input"
-           type="text" placeholder="Type a message..." />
-    <button id="chat-send-btn" class="chat-send-btn">Send</button>
-  </div>
-</div>
-
-<script>
 (function() {
+  const chatContainer = document.getElementById('battle-chat');
+  // Read the match id from the data attribute
+  const matchId = chatContainer.dataset.matchId;
   const protocol = window.location.protocol === 'https:' ? 'wss://' : 'ws://';
-  const chatSocket = new WebSocket(protocol + window.location.host + '/ws/chat/global/');
-  const chatLog    = document.getElementById('chat-log');
-  const chatInput  = document.getElementById('chat-message-input');
-  const chatSend   = document.getElementById('chat-send-btn');
+  const chatSocket = new WebSocket(protocol + window.location.host + `/ws/chat/match/${matchId}/`);
+  const chatLog    = document.getElementById('chat-log-match');
+  const chatInput  = document.getElementById('chat-message-input-match');
+  const chatSend   = document.getElementById('chat-send-btn-match');
 
-  chatSocket.onopen = () => console.log('Chat WS connected');
+  chatSocket.onopen = () => console.log('Match Chat WS connected');
   chatSocket.onerror = err => console.error('Chat WS error:', err);
 
   chatSocket.onmessage = function(e) {
@@ -59,4 +50,3 @@
     chatInput.value = '';
   }
 })();
-</script>

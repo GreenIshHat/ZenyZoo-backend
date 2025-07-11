@@ -10,16 +10,22 @@ from django.contrib.auth   import get_user_model
 
 from game.models import Match, Player
 
-
+from django.utils.timesince import timesince
+from django.utils import timezone
+from datetime import timedelta
 
 User = get_user_model()
 
 @login_required
 def match_list_view(request):
+    cutoff = timezone.now() - timedelta(hours=1)
     open_matches = Match.objects.filter(
-        player_two__isnull=True,
-        is_active=True
-    ).order_by('id')
+        is_active=True,
+        is_finished=False,
+        created_at__gte=cutoff   # only show matches less than 1h old
+    ).order_by('created_at')
+    for m in open_matches:
+        m.since = timesince(m.created_at, timezone.now())
     return render(request, 'game/match_list.html', {
         'open_matches': open_matches
     })
