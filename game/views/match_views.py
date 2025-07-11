@@ -14,6 +14,8 @@ from django.utils.timesince import timesince
 from django.utils import timezone
 from datetime import timedelta
 
+# from game.events import on_player_joined
+
 User = get_user_model()
 
 @login_required
@@ -51,6 +53,7 @@ def join_match(request):
                 }
             }
         )
+        #on_player_joined(match)   # <— Notify the channel layer here
 
     return redirect('battle_view', match_id=match.id)
 

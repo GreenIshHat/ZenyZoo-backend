@@ -10,8 +10,23 @@ from game.views.api import (
     get_match_state as _get_state_api,
     battle_bot      as _battle_bot_api    # if you ever want to proxy bot‐moves over WS too
 )
-from asgiref.sync           import sync_to_async
+from asgiref.sync           import sync_to_async, async_to_sync
+from channels.layers import get_channel_layer
 
+
+def on_player_joined(match):
+    channel_layer = get_channel_layer()
+    async_to_sync(channel_layer.group_send)(
+        "match_list",
+        {
+            "type": "match_joined",
+            "data": {
+                "match_id": match.id,
+                "player_two": match.player_two.user.username,
+            }
+        }
+    )
+    
 class MatchListConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):
         if self.scope["user"].is_anonymous:
@@ -35,7 +50,6 @@ class MatchListConsumer(AsyncJsonWebsocketConsumer):
             "event": "match_joined",
             "data": event["data"],
         })
-
 
 
 

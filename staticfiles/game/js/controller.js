@@ -134,6 +134,11 @@ async init() {
         this.lastPlays.clear();
         this.playedCardIds.clear();
         boardArr.forEach(mv => this._placeMove(mv));
+        
+        const deckEl = document.getElementById('move-spinner');
+        if (deckEl) {
+            document.getElementById('move-spinner').style.display = "none";
+        }
     }
 
 async makeMove(position) {
@@ -147,6 +152,7 @@ async makeMove(position) {
 
     try {
         if (this.socket?.readyState === WebSocket.OPEN) {
+            document.getElementById('move-spinner').style.display = "flex";
             this.socket.send(JSON.stringify({ type: "move", payload }));
         } else {
             // fallback to fetch
@@ -203,6 +209,10 @@ async makeMove(position) {
 
 
 onCellClick(evt) {
+    if (this.currentTurnId !== this.playerId) {
+        alert("Wait your turn!");
+        return;
+    }
     if (this.inputLocked || this.gameOver || evt.target.closest(".card.used") || this.currentTurnId !== this.playerId) return;
     this.makeMove(+evt.currentTarget.dataset.position);
 }
@@ -240,29 +250,32 @@ _handleGameOver(winnerId) {
     this.gameOver = true;
     sfx.stopBackground();
     this.timer.stop();
+    // const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
 
-    // Determine spectator or player
+
+  
     const isSpectator = window.isSpectator === true || (typeof this.playerId !== "number");
 
-    let msg;
-    if (isSpectator) {
-        msg = winnerId === null
+let msg;
+if (isSpectator) {
+    msg = winnerId === null
+        ? "🤝 Draw!"
+        : `🏁 Game Over – Winner: ${window.opponentName || "Unknown"}`;
+} else {
+    const win = winnerId === this.playerId;
+    msg = win
+        ? "🎉 You win!"
+        : winnerId === null
             ? "🤝 Draw!"
-            : `🏁 Game Over – Winner: ${window.opponentName || "Unknown"}`;
-    } else {
-        const win = winnerId === this.playerId;
-        msg = win
-            ? "🎉 You win!"
-            : winnerId === null
-                ? "🤝 Draw!"
-                : "😢 You lose!";
-    }
+            : "😢 You lose!";
+}
 
     this.banner.textContent = msg;
     this.banner.style.display = "block";
     if (!isSpectator && winnerId === this.playerId) sfx.fireConfetti();
     this.socket.close();
 }
+
 
     async handleForfeit() {
         if (this.gameOver) return;
