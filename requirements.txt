@@ -16,7 +16,7 @@ hyperlink==21.0.0
 idna==3.10
 incremental==24.7.2
 kiwisolver==1.4.8
-numpy==2.3.0
+
 packaging==25.0
 pillow==11.2.1
 psycopg2-binary==2.9.10

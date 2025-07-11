@@ -53,7 +53,9 @@ class MatchConsumer(AsyncWebsocketConsumer):
             # this will show up in your Daphne console
             import traceback; traceback.print_exc()
             # and close the socket immediately
-            await self.close(code=1011)
+        
+            # use a valid close code (1000 = normal; 3000–4999 = app-specific)
+            await self.close(code=3001)
 
 
     async def disconnect(self, close_code):
