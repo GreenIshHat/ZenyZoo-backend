@@ -1,0 +1,226 @@
+.spectator-banner {
+  background: #232b3d;
+  color: #ffd700;
+  border-radius: 4px;
+  padding: 0.5em 1em;
+  margin-bottom: 1em;
+  text-align: center;
+  font-weight: bold;
+  letter-spacing: 0.03em;
+}
+
+#player-panel {
+  width: 100%;
+  max-width: 350px;
+  margin: 0 auto;
+}
+
+#move-spinner {
+  position: absolute;
+  left: 0; top: 0; right: 0; bottom: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  background: rgba(201, 201, 222, 0.42);
+  z-index: 10;
+  pointer-events: all;
+}
+.spinner {
+  border: 5px solid #333;
+  border-top: 5px solid #ffd700;
+  border-radius: 50%;
+  width: 44px; height: 44px;
+  animation: spin 0.9s linear infinite;
+  margin-bottom: 24px;
+}
+@keyframes spin { 0% {transform: rotate(0deg);} 100% {transform: rotate(360deg);} }
+.wait-message {
+  font-size: 4.2rem; font-weight: 900;
+  color: #ffd700; text-shadow: 1px 1px 4px #000, 0 0 18px #222;
+  letter-spacing: 0.08em; margin-top: 12px; text-align: center;
+  text-transform: uppercase; opacity: 0.93;
+}
+
+#battle-wrapper {
+  display: flex;
+  flex-direction: row;
+  gap: 2em;
+  align-items: flex-start;
+}
+@media (max-width: 700px) {
+  #battle-wrapper { flex-direction: column; gap: 1em; align-items: center; }
+  #game-board { margin: 0 auto; }
+  #player-panel { width: 98vw; max-width: 340px; }
+}
+
+#game-board.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  grid-template-rows: repeat(3, 1fr);
+  gap: 4px;
+  width: 330px;
+  height: 330px;
+  background: #181a20;
+  border-radius: 12px;
+  box-shadow: 0 2px 12px #1117;
+  margin-bottom: 1em;
+}
+@media (max-width: 700px) {
+  #game-board.grid {
+    width: 95vw; height: 95vw;
+    max-width: 340px; max-height: 340px;
+  }
+}
+
+body { font-size: 1.1rem; }
+@media (max-width: 700px) {
+  body { font-size: 1rem; }
+  .chat-title, h1, h2 { font-size: 1.3rem; }
+  button, .chat-input, .chat-send-btn { font-size: 1rem; padding: 0.7em 1.3em; }
+  #game-board.grid {
+    aspect-ratio: 1 / 1; width: min(96vw, 350px); height: auto;
+    max-width: 350px; max-height: 350px; box-shadow: 0 4px 14px #181a;
+    border-radius: 14px;
+  }
+  #player-panel { margin-top: 1.5em; padding: 0 2vw; }
+}
+
+.quickplay-btns {
+  display: flex; gap: 0.5em; flex-wrap: wrap; margin: 1em 0;
+}
+.quickplay-btns a {
+  background: #ffd700; color: #181a20; border-radius: 8px;
+  padding: 0.6em 1.2em; font-weight: bold; text-decoration: none;
+  box-shadow: 0 2px 8px #1111; margin-bottom: 0.5em;
+  flex: 1 1 180px; text-align: center;
+}
+@media (max-width: 700px) {
+  .quickplay-btns { flex-direction: column; gap: 0.3em; }
+  .quickplay-btns a {
+    width: 98vw; max-width: 380px; margin: 0 auto 0.6em auto; font-size: 1.1rem;
+  }
+}
+@media (max-width: 500px) {
+  .quickplay-btns a { font-size: 0.95rem; padding: 0.6em 0.5em; min-width: 120px; }
+}
+
+/* --- HAND DECK CARDS (GRID) --- */
+#player-panel .deck {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 13px; /* More gap between cards */
+  justify-items: center;
+  width: 100%;
+  max-width: 320px;
+  margin: 0 auto;
+}
+@media (max-width: 700px) {
+  #player-panel .deck {
+    grid-template-columns: repeat(3, 1fr);
+    max-width: 255px;
+    gap: 8px;
+  }
+}
+#player-panel .deck .card {
+  width: 62px;
+  height: 62px;
+  border-radius: 9px;
+  background: #181a20;
+  box-shadow: 0 1px 6px #0006;
+  position: relative;
+  overflow: hidden;
+  outline: 1.5px solid #2228;
+}
+@media (max-width: 700px) {
+  #player-panel .deck .card {
+    width: 48px;
+    height: 48px;
+  }
+}
+#player-panel .deck .card-face {
+  width: 100%; height: 100%;
+  background-size: cover; background-position: center; border-radius: 8px;
+  display: block;
+}
+#player-panel .deck .stat {
+  font-size: 1.1rem; /* Bigger font for numbers */
+  font-weight: bold;
+  position: absolute;
+  background: #222b;
+  color: #ffd700;
+  border-radius: 4px;
+  padding: 0 5px;
+  letter-spacing: 0.02em;
+  pointer-events: none;
+  text-shadow: 1px 1px 2px #000a;
+}
+#player-panel .deck .stat-top    { top: 2px; left: 50%; transform: translateX(-50%); }
+#player-panel .deck .stat-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+#player-panel .deck .stat-left   { top: 50%; left: 2px; transform: translateY(-50%); }
+#player-panel .deck .stat-right  { top: 50%; right: 2px; transform: translateY(-50%); }
+
+
+/* Universal Card Styling */
+.card, .profile-deck-grid .card, #player-panel .deck .card, .card-tile .card {
+  min-width: 44px;
+  min-height: 44px;
+  width: 62px;
+  height: 62px;
+  background: #181a20;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px #0003;
+  overflow: hidden;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  aspect-ratio: 1 / 1;   /* Always square except in deck-grid/picker if you want */
+}
+
+/* On smaller screens, cards shrink but never collapse */
+@media (max-width: 700px) {
+  .card, .profile-deck-grid .card, #player-panel .deck .card, .card-tile .card {
+    min-width: 36px;
+    min-height: 36px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+/* Grid deck or picker: maintain 4:5 aspect and min size */
+.card-grid .card, .deck-grid .card {
+  aspect-ratio: 4/5 !important;
+  min-height: 140px;
+  width: 100%;
+  height: auto;
+}
+@media (max-width: 600px) {
+  .card-grid .card, .deck-grid .card {
+    min-height: 110px;
+  }
+}
+
+/* Always fill face */
+.card-face {
+  width: 100%;
+  height: 100%;
+  min-width: inherit;
+  min-height: inherit;
+  background-size: cover;
+  background-position: center;
+  border-radius: inherit;
+  display: block;
+}
+
+/* Avoid stat overlap: tweak stat positions/gap as needed */
+.stat {
+  font-size: 1rem;
+  width: 28px;
+  height: 28px;
+  line-height: 28px;
+}
+.stat-top    { top: 2px; left: 50%; transform: translateX(-50%); }
+.stat-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
+.stat-left   { left: 2px; top: 50%; transform: translateY(-50%); }
+.stat-right  { right: 2px; top: 50%; transform: translateY(-50%); }

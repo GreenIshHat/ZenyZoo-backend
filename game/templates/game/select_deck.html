@@ -1,5 +1,29 @@
 {% extends "base.html" %}
 {% block title %}Select Your Battle Deck{% endblock %}
+
+
+<style>
+  .card-tile input[type="checkbox"] {
+  accent-color: #ffd700;
+  transform: scale(1.4);
+  margin-right: 8px;
+  vertical-align: middle;
+}
+@media (max-width: 700px) {
+  .card-tile input[type="checkbox"] {
+    transform: scale(1.2);
+  }
+}
+.card-tile .card-info {
+  font-size: 0.95rem;
+  margin-top: 2px;
+  text-align: center;
+}
+
+
+</style>
+
+
 {% block content %}
   <h2>Select 7 Cards for Your Battle Deck</h2>
 

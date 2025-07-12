@@ -1,188 +1,95 @@
-TODO:
-implement timer per turn checks on the backend and consequences of not playing in time
+🦄 Zeny Zoo: DevOps Recap & MVP Strike Plan
 
-poll server for match list update
+You’ve got 3 categories:
 
-adjust image resizes for 16/9 screens. 
-UI prettify. responsive / mobile viewports
+    Immediate MVP (top priority)
 
-socks version instead polling for more fluid gameplay
+    UX Next-Ups (polish but not required for first public show)
 
-bug: check lose message for the loser
+    Post-MVP (future fire)
 
-stat: active player5 now. (last hour?)
+🚀 Immediate MVP—Ship These, Show Off
 
---allow user to only create 1 match
+    WebSocket game flow: No more polling. All moves/board/chat in real-time, both players and spectators.
 
---chat vs players *and bot w deepseek api
+    In-match Chat: Works, styled, Spectator mode respected, global + match.
 
---favicon on local (works deployed)
+    Game Over Logic: Show banners (“You win!”, “You lose!”, “Draw”, “Winner: [X]” for spectators).
 
-**think web3 and tokenomics
+    Bot Fixes: No dupe moves/cards, bot always responds single turn, never double.
 
----
+    Scoreboard: Named scores, always correct, always visible. No drift.
 
-Here’s how I’d sequence things, balancing impact vs. effort for an MVP:
+    Auto-Forfeit: If >60s, game ends, forfeit message shown.
 
----
+    Single Match Creation: User can only open one active match at a time.
 
-### 1. **Real-Time Game Flow (High ROI)**
+    Match Join Alert: WS update, auto-redirect when player joins your match.
 
-* **WebSocket GameConsumer**
-  *Why:* Instant feedback makes your game feel snappier and more “alive” than polling.
-  *Rough Effort:* Moderate—you already have Channels wired up for chat, so move updates are a natural next step.
-* **In-match Chat Integration**
-  *Why:* Players love to trash-talk or cheer each other on. You’ve built the chat consumer, just surface it in the match view.
+    Spectator Clean UI: No deck for spectator, show who’s in.
 
-### 2. **Polish & UX (Medium ROI)**
+    Spinner: Deck & board show “Waiting for server…” translucent overlay on move.
 
-* **Mobile/Responsive Layout**
-  *Why:* Even basic media-queries give you 80% of the benefit. Focus on breaking points and larger tap targets.
-  *Rough Effort:* Low—start with CSS grid/flex tweaks and a responsive meta tag.
-* **Sound & Visual SFX**
-  *Why:* A little flip sound + confetti on win goes a long way to “feel” good. You’ve scaffolded sfx modules already.
-* **Rematch Button**
-  *Why:* Keeps the engagement loop tight—“Play again?” immediately after a game.
+    Favicon/static loads both locally & prod.
 
-### 3. **Bots & AI (Medium–Low ROI)**
+    Lose message: Only shows to actual player, not spectators.
 
-* **Minimax/Alpha-Beta Tier**
-  *Why:* You already have the RandomBot; wrapping in deeper search is a nice “hard” mode.
-  *Rough Effort:* Moderate—algorithm work but little UI.
+    Basic mobile/responsive layout (media queries, big buttons).
 
-### 4. **Server-Enforced Timer (Lower ROI)**
+✨ UX Upgrades (Day 2/3 after MVP)
 
-* **Why:** Guarantees pace, but for MVP you can get by with a front-end countdown and a soft forfeit.
-* **When:** Tackle this once your real-time WS loop is solid.
+    Rematch Button: After game over, “Play Again” spawns new match, invites last opponent.
 
-### 5. **Game Replays & Analytics (Lowest ROI)**
+    Online Players Counter: Count in lobby (Redis, simple API or WS).
 
-* **Why:** Cool for power users and demos, but not essential to your first public launch.
-* **When:** After core loop + social/UX polish.
+    Friend List: Only wireframe, core add/remove/block/leaderboard logic, not polish.
 
----
+    Game History: “Last games” on profile (opponents, win/loss).
 
-**Your Next Steps:**
+    Accessibility polish: Colors, focus, contrast.
 
-1. Swap out polling → WS for moves
-2. Embed the existing chat into the battle page
-3. Tackle responsive CSS (media-queries, touch targets)
-4. Hook up SFX/confetti/rematch UX
+    Bot Chat: (DeepSeek/LLM): Have RamBot trash-talk after moves.
 
-That combo will give you a *super* engaging, immediate-feel multiplayer experience—strong enough to show off on Product Hunt—before investing in heavier features like replays or strict server timers.
+    Lobbies/invites: Public/private match invites, links.
 
+🧞‍♂️ Post-MVP (Queue These)
 
-***
+    Leagues/Shop (barebones only, no real commerce)
 
+    Replay/Analytics for match review
 
-Today’s progress recap & outstanding items
+    Switch frontend to Svelte or similar
 
-    Global Chat up & styled, with join/leave notices over WebSockets.
+    Consider Rust rewrite only after user feedback
 
-    Polling-based game flow refactored into startMatchPolling(). Deck loads, moves place, flips animate, SFX wired, confetti blasts on game‐over.
+What’s Next / Tomorrow’s TODO (Fastest Value)
 
-    Bug triage in flight:
+    Bot dupe/2x move bug (core fun killer—fix first)
 
-        Premature “Game over” firing
+    Finish spinner UX: Only show when move is processing, remove on response. Keep it tight, not fullscreen.
 
-        Missing board redraw on first load
+    Game over banner: Spectator, P1, P2—correct, no mixup.
 
-        Two-player auto-refresh inconsistencies
+    WS join alert: If match is yours, WS triggers redirect to game.
 
-        Timer UI still pending
+    Only show “join” if not already in game.
 
-        Minor JS exports/imports and sfx module cleanups
+    One match per user, lockout on extra create.
 
-Next-up feature ideas
+    Responsive CSS pass (header, buttons, board)
 
-    Real-time & Networking
+    Confirm “waiting for server” overlay works in both player and bot flow.
 
-        WebSocket GameConsumer instead of polling
+What You Can Defer
 
-        Server-driven per-move countdown + auto-forfeit
+    League system, shop, invite links, deep profile stuff
 
-    Social & Matchmaking
+    Anything requiring deep stateful analytics
 
-        In-match chat (team vs. global)
+    Bot chat (LLM API) for day 2/3
 
-        Public lobbies & invitation links
+Commit Message Suggestion
 
-        Spectator mode
+MVP core features: real-time WS game/chat, bot move/dupe fix, game over banners, single active match per user, mobile-ready UI, improved join/alert flow, spinner overlay, proper spectator handling. Next: squash bot double-move, rematch btn, polish, prep for Product Hunt.
 
-    UI/UX Enhancements
 
-        Polish flip animations & particle effects
-
-        Mobile-friendly/touch gestures
-
-        Accessibility (keyboard nav, ARIA, color-blind support)
-
-    Gameplay & Content
-
-        Rematch/draw proposals
-
-        Alternate rule-sets (blitz, power-ups)
-
-        Achievements & badges
-
-    Persistence & Analytics
-
-        Elo leaderboards & stats dashboard
-
-        Match replays
-
-        Usage metrics (DAU, match length, popular decks)
-
-+++
-
-🦄 Zeny Zoo: Updated Task & Bug List (Priority Extract)
-1. High-Priority:
-
-    Bot Duplicate Plays
-
-        Issue: RandomBot sometimes reuses the same PlayerCard twice per match.
-
-        Action: Refactor choose_move logic to exclude already-played PlayerCard instances (not just by card type/ID).
-
-        Verify: Commit the move immediately after selection to prevent duplicate picks.
-
-2. Next-Action Sprint:
-
-    Player 2 Stats
-
-        TODO: Add accurate Win/Loss counters for Player 2 (both human and bot sessions).
-
-3. Workflow/Infra
-
-    Fix API vs Template URL issues (/game/api/...).
-
-    Static files & CSRF for AJAX reliability.
-
-    POST-based logout, proper login/register redirects.
-
-4. UI & Game State
-
-    Board polling: reflect all moves in near-real time (no F5).
-
-    Dedicated “Game Over” banner with winner highlight, freeze board on end.
-
-    Animation: ensure flips update owner highlights on every change.
-
-5. Multiplayer Testing
-
-    Alice vs Bob: deck select, match, moves, end.
-
-    Spectator mode: reload and verify real-time board updates.
-
-6. Statistics/Profiles
-
-    Human vs Human stats.
-
-    Bot stats separated.
-
-    Win/Loss/Draw counters increment at match-end, not before.
-
-Immediate Focus
-
-    Start with: Bot duplicate–card fix
-    Next: Full 2-player flow (Alice vs Bob), ensure stats update, polish UI
