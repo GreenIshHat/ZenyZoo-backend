@@ -224,3 +224,17 @@ body { font-size: 1.1rem; }
 .stat-bottom { bottom: 2px; left: 50%; transform: translateX(-50%); }
 .stat-left   { left: 2px; top: 50%; transform: translateY(-50%); }
 .stat-right  { right: 2px; top: 50%; transform: translateY(-50%); }
+
+
+
+
+.card, .card-face {
+  width: 100% !important;
+  height: 100% !important;
+  min-width: 0;
+  min-height: 48px;
+  aspect-ratio: 1 / 1;
+  display: block;
+  background-size: cover;
+  background-position: center;
+}
