@@ -3,6 +3,40 @@
 
 {% block content %}
 
+<style>
+
+.standings-table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-top: 1rem;
+  font-size: 1rem;
+}
+@media (max-width: 700px) {
+  .standings-table {
+    font-size: 0.9rem;
+    display: block;
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+  .standings-table thead, .standings-table tbody, .standings-table tr {
+    display: table;
+    width: 100%;
+    table-layout: fixed;
+  }
+}
+.standings-table th, .standings-table td {
+  border: 1px solid #ccc;
+  padding: .5rem;
+  text-align: center;
+}
+.standings-table th {
+  background: #f0f0f0;
+}
+
+
+</style>
+
+
   <h2>🏆 Human Leaderboard</h2>
 
   {% if human_standings %}
@@ -86,19 +120,40 @@
 
 {% block extra_css %}
 <style>
-  .standings-table {
+.standings-table th, .standings-table td {
+  border: 1px solid #ccc;
+  padding: .5rem;
+  text-align: center;
+  word-break: break-word;
+  white-space: normal;
+  max-width: 90px;
+}
+@media (max-width: 700px) {
+  .standings-table th, .standings-table td {
+    font-size: 0.9rem;
+    padding: .3rem;
+    max-width: 66px;
+  }
+}
+
+@media (max-width: 500px) {
+  .standings-table td, .standings-table th {
+    display: block;
     width: 100%;
-    border-collapse: collapse;
-    margin-top: 1rem;
+    max-width: none;
+    text-align: left;
+    font-size: 0.97rem;
   }
-  .standings-table th,
-  .standings-table td {
-    border: 1px solid #ccc;
-    padding: .5rem;
-    text-align: center;
+  .standings-table tr {
+    display: block;
+    margin-bottom: 0.7em;
+    border-bottom: 2px solid #ffd700;
   }
-  .standings-table th {
-    background: #f0f0f0;
-  }
+}
+.standings-table td, .standings-table th {
+  overflow-wrap: anywhere;
+}
+
+
 </style>
 {% endblock %}

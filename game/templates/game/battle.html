@@ -1,90 +1,31 @@
 {% extends "base.html" %}
 {% load static %}
+<link rel="stylesheet" href="{% static 'game/battle.css' %}">
+
 
 {% block title %}Battle Arena{% endblock %}
 
 {% block content %}
 
-<style>
-  .spectator-banner {
-    background: #232b3d;
-    color: #ffd700;
-    border-radius: 4px;
-    padding: 0.5em 1em;
-    margin-bottom: 1em;
-    text-align: center;
-    font-weight: bold;
-    letter-spacing: 0.03em;
-  }
 
-  #player-panel {
-    position: relative;
-  }
-
-  
-  #move-spinner {
-  position: absolute;
-  left: 0; top: 0; right: 0; bottom: 0;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  background: rgba(201, 201, 222, 0.42);  /* darker, more translucent */
-  z-index: 10;
-  pointer-events: all;
-}
-
-.spinner {
-  border: 5px solid #333;
-  border-top: 5px solid #ffd700; /* golden accent */
-  border-radius: 50%;
-  width: 44px;
-  height: 44px;
-  animation: spin 0.9s linear infinite;
-  margin-bottom: 24px;
-}
-
-@keyframes spin {
-  0%   { transform: rotate(0deg);}
-  100% { transform: rotate(360deg);}
-}
-
-.wait-message {
-  font-size: 4.2rem;
-  font-weight: 900;
-  color: #ffd700;
-  text-shadow: 1px 1px 4px #000, 0 0 18px #222;
-  letter-spacing: 0.08em;
-  margin-top: 12px;
-  text-align: center;
-  text-transform: uppercase;
-  opacity: 0.93;
-}
-
-</style>
 
 
 <h1>Zenyzoo: Match #{{ match.id }}</h1>
 
 {% if not match.player_two %}
 <p>Waiting for an opponent…</p>
-<p>
-  <a href="{% url 'start_bot_match' match.id %}?difficulty=random">
-    Play vs Bot (Easy – RamBot)
-  </a>
-  &nbsp;|&nbsp;
-  <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">
-    Play vs Bot (Medium – Maxie)
-  </a>
-  &nbsp;|&nbsp;
-  <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">
-    Play vs Bot (Hard – BrainBot)
-  </a>
+
+<p class="quickplay-btns">
+  <a href="{% url 'start_bot_match' match.id %}?difficulty=random">Play vs Bot (Easy – RamBot)</a>
+  <a href="{% url 'start_bot_match' match.id %}?difficulty=minmax">Play vs Bot (Medium – Maxie)</a>
+  <a href="{% url 'start_bot_match' match.id %}?difficulty=advanced">Play vs Bot (Hard – BrainBot)</a>
+</p>
+
   <!-- &nbsp;|&nbsp;
       <a href="{% url 'start_bot_match' match.id %}?difficulty=alphabeta">
         Play vs Bot (Hard – AlphaBeta)
       </a> -->
-</p>
+
 {% else %}
 {# force Django to set CSRF cookie #}
 <form id="csrf-form" style="display:none;">{% csrf_token %}</form>
@@ -104,16 +45,17 @@
 </div>
 
 <div id="battle-wrapper" style="position:relative;">
-  <div id="game-board" class="grid"></div>
+  <div id="game-board" class="grid" style="position:relative;">
 
-  <div id="move-spinner" style="display: none;">
-    <div class="spinner"></div>
-    <div>Waiting for server… --“Patience, grasshopper…”</div>
+    <div id="move-spinner" style="display: none;">
+      <div class="spinner"></div>
+      <div class="wait-message">Waiting for server…<br>Patience, grasshopper…</div>
+
+    </div>
   </div>
-
   {% if not is_spectator %}
   <div id="player-panel" style="position: relative;">
-  
+
     <h2>Your Deck</h2>
     <div id="player-deck" class="deck"></div>
   </div>
@@ -123,7 +65,7 @@
   </div>
 
   {% endif %}
-</div>
+
 
 
 </div>
@@ -147,6 +89,16 @@
   window.opponentName = null;
   window.isBotMatch = false;
   {% endif %}
+
+// mobile hint
+  if (window.innerWidth < 700 && window.innerWidth < window.innerHeight) {
+  const warn = document.createElement('div');
+  warn.style = 'position:fixed;bottom:16px;left:0;right:0;background:#222;color:#ffd700;text-align:center;font-size:1rem;padding:0.5em 0;z-index:9999;box-shadow:0 1px 8px #0006';
+  warn.innerHTML = '📱 Rotate your device for best experience!';
+  document.body.appendChild(warn);
+  setTimeout(()=>warn.remove(), 3000);
+}
+
 </script>
 
 {% if not match.player_two %}
@@ -156,6 +108,7 @@
 {# actual battle logic & polling for moves #}
 <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.5.1/dist/confetti.browser.min.js"></script>
 <script type="module" src="{% static 'game/js/main.js' %}"></script>
+
 
 
 {% endif %}

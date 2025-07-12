@@ -2,8 +2,44 @@
 
 {% block title %}Shop{% endblock %}
 
+<style>
+
+  .card-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1em;
+  justify-content: center;
+}
+.card-tile {
+  min-width: 120px;
+  max-width: 160px;
+  flex: 1 1 140px;
+  box-sizing: border-box;
+}
+@media (max-width: 700px) {
+  .card-grid {
+    gap: 0.5em;
+  }
+  .card-tile {
+    min-width: 95px;
+    max-width: 125px;
+    font-size: 0.9rem;
+  }
+}
+.buy-btn {
+  width: 100%;
+  font-size: 1rem;
+  margin-top: 0.4em;
+  padding: 0.5em 0;
+}
+
+
+</style>
+
+
 {% block content %}
-  <h2>Shop</h2>
+
+<h2>Shop</h2>
   <div class="card-grid">
     {% for item in shop_items %}
       <label class="card-tile">

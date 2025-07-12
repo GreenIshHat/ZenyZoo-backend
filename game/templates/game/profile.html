@@ -1,6 +1,56 @@
 {% extends "base.html" %}
 {% block title %}{{ user.username }}'s Profile{% endblock %}
 
+<style>
+
+.profile-deck-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(46px, 1fr));
+  gap: 4px;
+  max-width: 320px;
+  min-height: 50px;
+  margin: 0 auto;
+}
+
+.profile-deck-grid .card {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  background: #111;
+  border-radius: 6px;
+  overflow: hidden;
+  box-shadow: 0 1px 4px #0002;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.profile-deck-grid .card-face {
+  width: 100%;
+  height: 100%;
+  background-size: cover;
+  background-position: center;
+  border-radius: 6px;
+  /* Add this for images */
+  display: block;
+}
+.profile-deck-grid .stat {
+  position: absolute;
+  font-size: 0.60rem;
+  color: #ffd700;
+  background: #222e;
+  border-radius: 3px;
+  padding: 1px 2px;
+  pointer-events: none;
+}
+.profile-deck-grid .stat-top { top: 2px; left: 18px; }
+.profile-deck-grid .stat-right { top: 18px; right: 2px; }
+.profile-deck-grid .stat-bottom { bottom: 2px; left: 18px; }
+.profile-deck-grid .stat-left { top: 18px; left: 2px; }
+
+
+</style>
+
+
 {% block content %}
 
   <h2>{{ user.username }}'s Profile</h2>
@@ -38,7 +88,7 @@
   {% endif %}
 
   <h3>Battle Deck</h3>
-  <div class="deck-grid">
+  <div class="profile-deck-grid">
     {% for pc in battle_deck %}
       <div class="card">
         <div class="card-face"
@@ -55,7 +105,7 @@
   </div>
 
   <h3>Owned Cards</h3>
-  <div class="deck-grid">
+  <div class="profile-deck-grid">
     {% for pc in all_cards %}
       <div class="card">
         <div class="card-face"
