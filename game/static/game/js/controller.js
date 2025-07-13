@@ -77,13 +77,19 @@ export class GameController {
             this._renderFullBoard(init.board || []);
             this.updateTurn(init);
 
-            if (init.forfeited) {
-                this.gameOver = true;
-                sfx.stopBackground();
-                this.timer.stop();
-                this.banner.textContent = `⌛ ${init.winner} forfeited.`;
-                this.banner.style.display = "block";
-            }
+if (init.forfeited || init.game_over || init.is_active === false || init.is_finished === true) {
+    this.gameOver = true;
+    sfx.stopBackground();
+    this.timer.stop();
+    let reason = init.forfeited
+        ? `⌛ ${init.winner} forfeited.`
+        : init.winner
+            ? `🏁 Game Over – Winner: ${init.winner}`
+            : "🤝 Draw!";
+    this.banner.textContent = reason;
+    this.banner.style.display = "block";
+}
+
         } catch (e) {
             console.error("Initial load failed:", e);
         }
@@ -130,16 +136,22 @@ export class GameController {
         isMe ? (greyOutCardElement(mv.player_card_id), sfx.playPlace()) : sfx.playBot();
     }
 
-    _renderFullBoard(boardArr) {
-        this.lastPlays.clear();
-        this.playedCardIds.clear();
-        boardArr.forEach(mv => this._placeMove(mv));
+_renderFullBoard(boardArr) {
+    this.lastPlays.clear();
+    this.playedCardIds.clear();
 
-        const deckEl = document.getElementById('move-spinner');
-        if (deckEl) {
-            document.getElementById('move-spinner').style.display = "none";
-        }
+    // 🚨 Clear all cells
+    Object.values(this.cellMap).forEach(cell => cell.innerHTML = "");
+
+    // Now render all moves
+    boardArr.forEach(mv => this._placeMove(mv));
+
+    const deckEl = document.getElementById('move-spinner');
+    if (deckEl) {
+        document.getElementById('move-spinner').style.display = "none";
     }
+}
+
 
     async makeMove(position) {
         if (!this.selectedCardId || this.gameOver) return;
@@ -248,29 +260,40 @@ export class GameController {
         //         console.error("WS state fetch failed:", e);
         //     }
         // };
-        this.socket.onmessage = (evt) => {
-            if (this.gameOver) return;
-            let data;
-            try { data = JSON.parse(evt.data); } catch (e) { return; }
+this.socket.onmessage = (event) => {
+    if (this.gameOver) return;
+    try {
+        const data = JSON.parse(event.data);
 
-            // Handle flips directly
-            if (data.flips && data.flips.length) {
-                applyFlips(this.cellMap, data.flips, this.playerId);
-            }
-            if (data.bot_flips && data.bot_flips.length) {
-                applyFlips(this.cellMap, data.bot_flips, this.playerId);
-            }
-            // If a card was placed (data.bot_move or your move): add it
-            if (data.bot_move) this._placeMove(data.bot_move);
-            // TODO: For your own move: update board if needed (depends on your flow)
-            
-            // Update scores and turn
-            if (data.named_scores) this._updateScores(data.named_scores);
-            if (data.current_turn_id !== undefined) this.updateTurn(data);
-            if (data.game_over) this._handleGameOver(data.winner_id);
+        // Animate flips for player and bot
+ // Always prefer authoritative board from backend
+if (data.flips) applyFlips(this.cellMap, data.flips, this.playerId);
+if (data.bot_flips) applyFlips(this.cellMap, data.bot_flips, this.playerId);
 
-            // Fallback: If desync detected, only then fetch/render full board
-        };
+// Only use _renderFullBoard if data.board is present and up-to-date
+if (data.board && data.board.length) {
+    this._renderFullBoard(data.board);
+} else {
+    // As a fallback, place moves one by one if provided
+    if (data.move) this._placeMove(data.move);
+    if (data.bot_move) this._placeMove(data.bot_move);
+}
+
+this._updateScores(data.named_scores || {});
+this.updateTurn(data);
+
+// Hide spinner
+const deckEl = document.getElementById('move-spinner');
+if (deckEl) deckEl.style.display = "none";
+
+if (data.game_over) this._handleGameOver(data.winner_id);
+
+    } catch (e) {
+        console.error("WS state fetch failed:", e);
+    }
+};
+
+
 
 
         this.socket.onclose = () => { if (!this.gameOver) setTimeout(() => this._connectSocket(), this.reconnectDelay *= 2); };

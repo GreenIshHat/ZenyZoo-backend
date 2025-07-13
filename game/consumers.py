@@ -14,18 +14,6 @@ from asgiref.sync           import sync_to_async, async_to_sync
 from channels.layers import get_channel_layer
 
 
-def on_player_joined(match):
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "match_list",
-        {
-            "type": "match_joined",
-            "data": {
-                "match_id": match.id,
-                "player_two": match.player_two.user.username,
-            }
-        }
-    )
     
 class MatchListConsumer(AsyncJsonWebsocketConsumer):
     async def connect(self):

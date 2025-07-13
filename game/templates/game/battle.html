@@ -13,7 +13,8 @@
 <h1>Zenyzoo: Match #{{ match.id }}</h1>
 
 {% if not match.player_two %}
-<p>Waiting for an opponent…</p>
+<p>Waiting for an opponent… </p>
+<p>Wanna play a bot meanwhile?</p>
 
 <div class="quickplay-btns">
   <a href="{% url 'start_bot_match' match.id %}?difficulty=random">Play vs Bot (Easy – RamBot)</a>

@@ -1,6 +1,10 @@
 # game/utils.py
 
 from .models import Card, PlayerCard, MatchMove
+from channels.layers import get_channel_layer
+from asgiref.sync import async_to_sync
+
+
 
 STARTER_CARD_IDS = [15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28]
 
@@ -75,3 +79,22 @@ def check_flips(board, new_pos, new_card_pc):
             flips.append(neighbor_pos)
 
     return flips
+
+
+def serialize_board(match):
+    moves = MatchMove.objects.filter(match=match).order_by('position', 'pk')
+    return [
+        {
+            "position": m.position,
+            "player_id": m.player.id,
+            "player_card_id": m.card.id,
+            "card_name": m.card.card.name,
+            "image": m.card.card.image.url,
+            "card_top": m.card.card.strength_top,
+            "card_right": m.card.card.strength_right,
+            "card_bottom": m.card.card.strength_bottom,
+            "card_left": m.card.card.strength_left,
+            "color": "#1f77b4" if m.player == match.player_one else "#ff7f0e"
+        }
+        for m in moves
+    ]
