@@ -505,3 +505,24 @@ width: 7em !important;
   border-radius: 8px;
   display: block;
 }
+
+
+
+
+.quickplay-btns a {
+  display: block;
+  font-size: 2rem;
+  background: #007bff;
+  color: #fff !important;
+  border-radius: 1em;
+  margin: 1em 0;
+  padding: 1.2em 0.2em;
+  text-align: center;
+  text-decoration: none;
+  box-shadow: 0 2px 8px #0003;
+  touch-action: manipulation;
+}
+@media (max-width: 700px) {
+  .quickplay-btns a { font-size: 2.5rem; }
+}
+
