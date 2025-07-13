@@ -1,4 +1,4 @@
-import { loadBoard, updateScores, makeCard, greyOutCardElement } from "./ui.js";
+import { loadBoard, updateScores, makeCard, applyFlips, greyOutCardElement } from "./ui.js";
 import { initDeck } from "./deck.js";
 import { fetchJson, getCSRFToken } from "./utils.js";
 import * as sfx from "./sfx.js";
