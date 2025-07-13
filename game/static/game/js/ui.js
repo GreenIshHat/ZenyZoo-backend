@@ -49,12 +49,16 @@ export function applyFlips(cellMap, flips, playerId) {
 }
 
 
-export function updateScores(container, scores) {
-  if (!container || typeof scores !== "object") return;
-  container.textContent = Object.entries(scores)
-    .map(([n,c]) => `${n}: ${c}`)
-    .join(" — ");
+
+export function updateScores(scoreBar, scores) {
+  scoreBar.innerHTML = '';
+  Object.entries(scores).forEach(([name, score], i) => {
+    const color = i === 0 ? '#1f77b4' : '#ff7f0e';
+    scoreBar.innerHTML += `<span style="color:${color};font-weight:bold;">${name}: ${score}</span>`;
+    if (i === 0) scoreBar.innerHTML += ' — ';
+  });
 }
+
 
 
 export function greyOutCardElement(playerCardId) {
