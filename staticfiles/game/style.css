@@ -476,8 +476,8 @@
 .card, .profile-deck-grid .card, #player-panel .deck .card {
   min-width: 44px;
   min-height: 44px;
-  width: 62px;
-  height: 62px;
+  /* width: 62px;
+  height: 62px; */
   background: #181a20;
   border-radius: 8px;
   box-shadow: 0 1px 4px #0003;
