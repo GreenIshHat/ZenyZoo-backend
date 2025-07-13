@@ -4,11 +4,15 @@ from django.db.models import Q, Count
 from django.views.generic import TemplateView
 from game.models import Player, PlayerCard, Match, ShopCard
 
+from django.utils import timezone
+from datetime import timedelta
+
 @login_required
 def home_view(request):
     """
     Landing page after login.
     """
+    
     # enforce that a 7-card deck exists
     deck_count = PlayerCard.objects.filter(
         owner=request.user.player,
@@ -17,7 +21,21 @@ def home_view(request):
     if deck_count != 7:
         return redirect('choose_battle_deck')
 
-    return render(request, 'game/home.html')
+
+    # get users stats
+    from django.contrib.auth import get_user_model
+
+    User = get_user_model()
+    total_users = User.objects.count()
+    active_since = timezone.now() - timedelta(hours=1)
+    active_users = User.objects.filter(last_login__gte=active_since).count()
+
+
+    return render(request, "game/home.html", {
+        "total_users": total_users,
+        "active_users": active_users,
+    })
+
 
 class AboutView(TemplateView):
     template_name = 'game/about.html'

@@ -34,18 +34,20 @@ export function makeCard(card) {
   return wrapper;
 }
 
-export function applyFlips(cellMap, flips) {
-  flips.forEach(pos => {
-    const cell = cellMap[pos];
+// flips = [{ position: ..., owner_id: ... }, ...]
+export function applyFlips(cellMap, flips, playerId) {
+  flips.forEach(({position, owner_id}) => {
+    const cell = cellMap[position];
     cell.classList.add("flipped");
     const cardEl = cell.querySelector(".card.in-cell");
     if (cardEl) {
-      cardEl.classList.toggle("my-card");
-      cardEl.classList.toggle("opponent-card");
+      cardEl.classList.remove("my-card", "opponent-card");
+      cardEl.classList.add(owner_id === playerId ? "my-card" : "opponent-card");
     }
     setTimeout(() => cell.classList.remove("flipped"), 400);
   });
 }
+
 
 export function updateScores(container, scores) {
   if (!container || typeof scores !== "object") return;

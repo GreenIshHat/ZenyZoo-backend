@@ -235,18 +235,44 @@ export class GameController {
     _connectSocket() {
         this.socket = new WebSocket(this.socketUrl);
         this.socket.onopen = () => this.reconnectDelay = 1000;
-        this.socket.onmessage = async () => {
+
+        // this.socket.onmessage = async () => {
+        //     if (this.gameOver) return;
+        //     try {
+        //         const full = await fetchJson(this.stateUrl);
+        //         this._renderFullBoard(full.board);
+        //         this._updateScores(this._formatScores(full));
+        //         this.updateTurn(full);
+        //         if (full.game_over) this._handleGameOver(full.winner_id);
+        //     } catch (e) {
+        //         console.error("WS state fetch failed:", e);
+        //     }
+        // };
+        this.socket.onmessage = (evt) => {
             if (this.gameOver) return;
-            try {
-                const full = await fetchJson(this.stateUrl);
-                this._renderFullBoard(full.board);
-                this._updateScores(this._formatScores(full));
-                this.updateTurn(full);
-                if (full.game_over) this._handleGameOver(full.winner_id);
-            } catch (e) {
-                console.error("WS state fetch failed:", e);
+            let data;
+            try { data = JSON.parse(evt.data); } catch (e) { return; }
+
+            // Handle flips directly
+            if (data.flips && data.flips.length) {
+                applyFlips(this.cellMap, data.flips, this.playerId);
             }
+            if (data.bot_flips && data.bot_flips.length) {
+                applyFlips(this.cellMap, data.bot_flips, this.playerId);
+            }
+            // If a card was placed (data.bot_move or your move): add it
+            if (data.bot_move) this._placeMove(data.bot_move);
+            // TODO: For your own move: update board if needed (depends on your flow)
+            
+            // Update scores and turn
+            if (data.named_scores) this._updateScores(data.named_scores);
+            if (data.current_turn_id !== undefined) this.updateTurn(data);
+            if (data.game_over) this._handleGameOver(data.winner_id);
+
+            // Fallback: If desync detected, only then fetch/render full board
         };
+
+
         this.socket.onclose = () => { if (!this.gameOver) setTimeout(() => this._connectSocket(), this.reconnectDelay *= 2); };
         this.socket.onerror = e => console.error("WS error", e);
     }
