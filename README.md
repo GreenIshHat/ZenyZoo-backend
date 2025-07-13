@@ -184,3 +184,8 @@ Feel free to extend this README with deployment, Docker, CI/CD, or environment-s
 ---
 
 
+
+**Play the alpha now:** [https://zenyzoo-backend.onrender.com/game/matches/](https://zenyzoo-backend.onrender.com/game/matches/)
+
+*Bugs? Feedback? DM or email—see Support below.*
+

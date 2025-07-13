@@ -230,12 +230,20 @@ def make_move(request):
     named_scores = {p1.user.username: p1_score}
     if p2: named_scores[p2.user.username] = p2_score
     total_positions = len(board_final)
+    
     if not match.is_active or total_positions >= 9:
         if match.winner is None:
-            match.winner = p1 if p1_score > p2_score else p2
+            if p1_score > p2_score:
+                match.winner = p1
+            elif p2 and p2_score > p1_score:
+                match.winner = p2
+            else:
+                match.winner = None  # It's a draw
         match.is_active = False
         match.is_finished = True
         match.save()
+
+        
     response = {
         # "flips": flips,
         # "bot_flips": bot_flips,
@@ -252,7 +260,8 @@ def make_move(request):
         "bot_move": bot_move,
         "named_scores": named_scores,
         "game_over": not match.is_active,
-        "winner": match.winner.user.username if match.winner else None,
+        "winner": match.winner.user.username if match.winner else None,        
+        "winner_id": match.winner.id if match.winner else None,
         "current_turn_id": match.current_turn.id if match.current_turn else None,
         "current_turn_name": match.current_turn.user.username if match.current_turn else None
     }
