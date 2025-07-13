@@ -3,8 +3,9 @@
 set -e
 
 pwd
+
 echo "install reqs"
-pip install -r requirements.txt
+pip install --upgrade pip && pip install -r requirements.txt
 
 echo "[startup] applying migrations"
 python manage.py migrate --no-input

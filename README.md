@@ -5,6 +5,10 @@ A turn-based card-battle web app built with Django and Django REST Framework. Pl
 
 ---
 
+![Gameplay demo](./zenyzoo-demo.gif)
+
+---
+
 ## Prerequisites
 
 * **Python 3.10+**
