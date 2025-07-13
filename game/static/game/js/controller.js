@@ -235,14 +235,24 @@ _renderFullBoard(boardArr) {
     }
 
 
+    // TODO: move to ui.js
     updateTurn(data) {
-        const incoming = Number(data.current_turn_id);
-        if (incoming !== this.currentTurnId) {
-            this.currentTurnId = incoming;
-            this.playerTurnEl.textContent = data.current_turn_name;
-            incoming === this.playerId ? this.timer.start() : this.timer.stop();
+    const incoming = Number(data.current_turn_id);
+    if (incoming !== this.currentTurnId) {
+        this.currentTurnId = incoming;
+        this.playerTurnEl.textContent = data.current_turn_name;
+
+        // Highlight whose turn it is
+        if (data.current_turn_id == this.playerId) {
+            this.playerTurnEl.style.color = "#1f77b4 "; // Your color
+        } else {
+            this.playerTurnEl.style.color = "#ff7f0e"; // Opponent/bot color
         }
+
+        incoming === this.playerId ? this.timer.start() : this.timer.stop();
     }
+}
+
 
     _connectSocket() {
         this.socket = new WebSocket(this.socketUrl);
