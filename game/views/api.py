@@ -8,13 +8,19 @@ from django.contrib.auth.models import User
 from django.contrib.auth import authenticate, login
 
 from game.models        import Player, PlayerCard, Match, MatchMove, ShopCard
-from game.utils         import initialize_player_deck, check_flips
+from game.utils         import initialize_player_deck, check_flips, serialize_board
 from game.bots          import load_bot
 
 from channels.layers    import get_channel_layer
 from asgiref.sync       import async_to_sync
 
 from .serializers import MatchStateSerializer
+
+from game.events import on_player_joined
+from game.events import (
+    broadcast_match_created,
+    broadcast_match_joined,
+)
 
 # ─── Auth ────────────────────────────────────────────────────────────
 
@@ -110,6 +116,9 @@ def set_battle_deck(request):
 def create_open_match(request):
     player = get_object_or_404(Player, id=request.data.get("player_id"))
     match = Match.objects.create(player_one=player, current_turn=player, is_active=True)
+    
+    broadcast_match_created(match)
+    
     return Response({"match_id": match.id, "status": "waiting_for_opponent"})
 
 @api_view(['GET'])
@@ -128,7 +137,8 @@ def join_match(request):
     player = get_object_or_404(Player, id=request.data.get("player_id"))
     match.player_two = player
     match.save()
-    on_player_joined(match)   # <— Notify the channel layer here
+    
+    broadcast_match_joined(match)
     return Response({"match_id": match.id, "message": "Joined match"})
 
 
@@ -150,7 +160,9 @@ def execute_bot_move(match, bot_player):
     except ValueError:
         bot = load_bot("random", depth=2)
     for _ in range(MAX_BOT_TRIES):
-        taken = {m.position for m in MatchMove.objects.filter(match=match)}
+        # Always rebuild the board_map from latest DB state!
+        board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
+        taken = set(board_map.keys())
         decision = bot.choose_move(match, bot_player)
         if not decision or decision["position"] in taken:
             continue
@@ -159,7 +171,7 @@ def execute_bot_move(match, bot_player):
             mv = board_map[pos]
             mv.player = bot_player
             mv.save()
-        board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
+        # Add the bot's new move
         MatchMove.objects.create(match=match, player=bot_player, card=decision["card"], position=decision["position"])
         move_info = {
             "position": decision["position"],
@@ -176,6 +188,7 @@ def execute_bot_move(match, bot_player):
     return None, []
 
 
+
 @api_view(['POST'])
 @permission_classes([IsAuthenticated])
 def make_move(request):
@@ -186,12 +199,12 @@ def make_move(request):
         return Response({"error": "Invalid move"}, status=400)
     card_obj = get_object_or_404(PlayerCard, id=data.get("card_id"), owner=player, in_battle_deck=True)
     position = data.get("position")
+    board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
     flips = check_flips(board_map, position, card_obj)
     for pos in flips:
         mv = board_map[pos]
         mv.player = player
         mv.save()
-    board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
     MatchMove.objects.create(match=match, player=player, card=card_obj, position=position)
     next_player = match.player_two if player == match.player_one else match.player_one
     if getattr(next_player, "is_bot", False):
@@ -199,11 +212,14 @@ def make_move(request):
         if bot_move is None:
             match.is_active = False
             match.winner = player
+            match.current_turn = None
         else:
+            # After bot moves, it's human's turn again
             match.current_turn = player
     else:
         bot_move, bot_flips = None, []
         match.current_turn = next_player
+
     match.save()
     moves = MatchMove.objects.filter(match=match).order_by('position', 'pk')
     board_final = {m.position: m for m in moves}
@@ -232,7 +248,7 @@ def make_move(request):
             {"position": pos, "owner_id": board_map[pos].player.id}
             for pos in bot_flips
         ],
-        
+        "board": serialize_board(match),
         "bot_move": bot_move,
         "named_scores": named_scores,
         "game_over": not match.is_active,
@@ -259,6 +275,8 @@ def battle_bot(request):
     p2 = match.player_two
     named_scores = {p1.user.username: sum(1 for mv in board_final.values() if mv.player == p1)}
     if p2: named_scores[p2.user.username] = sum(1 for mv in board_final.values() if mv.player == p2)
+    board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
+
     return Response({
         "bot_move": bot_move,
         # "bot_flips": bot_flips,
@@ -266,6 +284,7 @@ def battle_bot(request):
             {"position": pos, "owner_id": board_map[pos].player.id}
             for pos in bot_flips
         ],
+        "board": serialize_board(match),
         "named_scores": named_scores,
         "current_turn_id": human.id,
         "current_turn_name": human.user.username

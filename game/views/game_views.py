@@ -7,6 +7,8 @@ from game.models import Player, PlayerCard, Match, ShopCard
 from django.utils import timezone
 from datetime import timedelta
 
+from game.events import broadcast_match_joined
+
 @login_required
 def home_view(request):
     """
@@ -113,6 +115,7 @@ def battle_view(request, match_id):
     if match.player_two is None and player != match.player_one:
         match.player_two = player
         match.save()
+        broadcast_match_joined(match)
 
     # Not a player if not p1 or p2
     is_spectator = not (player and (player == match.player_one or player == match.player_two))

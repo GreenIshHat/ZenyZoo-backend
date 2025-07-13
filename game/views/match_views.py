@@ -14,7 +14,7 @@ from django.utils.timesince import timesince
 from django.utils import timezone
 from datetime import timedelta
 
-# from game.events import on_player_joined
+from game.events import broadcast_match_created, broadcast_match_joined
 
 User = get_user_model()
 
@@ -41,19 +41,8 @@ def join_match(request):
         match.player_two = get_object_or_404(Player, id=player_id)
         match.save()
 
-        # notify everyone that this match now has a second player
-        channel_layer = get_channel_layer()
-        async_to_sync(channel_layer.group_send)(
-            "match_list",
-            {
-                "type": "match_joined",
-                "data": {
-                    "id":          match.id,
-                    "player_two":  match.player_two.user.username
-                }
-            }
-        )
-        #on_player_joined(match)   # <— Notify the channel layer here
+
+    broadcast_match_joined(match)
 
     return redirect('battle_view', match_id=match.id)
 
@@ -69,18 +58,7 @@ def start_match(request):
         is_active=True
     )
 
-    # notify everyone a new match is open
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "match_list",
-        {
-            "type": "match_created",
-            "data": {
-                "id":         match.id,
-                "player_one": match.player_one.user.username
-            }
-        }
-    )
+    broadcast_match_created(match)
 
     return redirect('battle_view', match_id=match.id)
 
@@ -97,6 +75,7 @@ def quick_match(request):
     if match:
         match.player_two = player
         match.save()
+        broadcast_match_joined(match)  # <--- important!
     else:
         match = Match.objects.create(
             player_one=player,
@@ -104,18 +83,7 @@ def quick_match(request):
             is_active=True
         )
 
-    # notify everyone a new match is open
-    channel_layer = get_channel_layer()
-    async_to_sync(channel_layer.group_send)(
-        "match_list",
-        {
-            "type": "match_created",
-            "data": {
-                "id":         match.id,
-                "player_one": match.player_one.user.username
-            }
-        }
-    )
+    broadcast_match_created(match)  # <--- important!
 
     return redirect('battle_view', match_id=match.id)
     
