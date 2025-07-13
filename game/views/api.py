@@ -154,12 +154,12 @@ def execute_bot_move(match, bot_player):
         decision = bot.choose_move(match, bot_player)
         if not decision or decision["position"] in taken:
             continue
-        board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
         flips = check_flips(board_map, decision["position"], decision["card"])
         for pos in flips:
             mv = board_map[pos]
             mv.player = bot_player
             mv.save()
+        board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
         MatchMove.objects.create(match=match, player=bot_player, card=decision["card"], position=decision["position"])
         move_info = {
             "position": decision["position"],
@@ -186,12 +186,12 @@ def make_move(request):
         return Response({"error": "Invalid move"}, status=400)
     card_obj = get_object_or_404(PlayerCard, id=data.get("card_id"), owner=player, in_battle_deck=True)
     position = data.get("position")
-    board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
     flips = check_flips(board_map, position, card_obj)
     for pos in flips:
         mv = board_map[pos]
         mv.player = player
         mv.save()
+    board_map = {m.position: m for m in MatchMove.objects.filter(match=match)}
     MatchMove.objects.create(match=match, player=player, card=card_obj, position=position)
     next_player = match.player_two if player == match.player_one else match.player_one
     if getattr(next_player, "is_bot", False):
@@ -221,8 +221,18 @@ def make_move(request):
         match.is_finished = True
         match.save()
     response = {
-        "flips": flips,
-        "bot_flips": bot_flips,
+        # "flips": flips,
+        # "bot_flips": bot_flips,
+        "flips": [
+            {"position": pos, "owner_id": board_map[pos].player.id}
+            for pos in flips
+        ],
+        # for bot:
+        "bot_flips": [
+            {"position": pos, "owner_id": board_map[pos].player.id}
+            for pos in bot_flips
+        ],
+        
         "bot_move": bot_move,
         "named_scores": named_scores,
         "game_over": not match.is_active,
@@ -251,7 +261,11 @@ def battle_bot(request):
     if p2: named_scores[p2.user.username] = sum(1 for mv in board_final.values() if mv.player == p2)
     return Response({
         "bot_move": bot_move,
-        "bot_flips": bot_flips,
+        # "bot_flips": bot_flips,
+        "bot_flips": [
+            {"position": pos, "owner_id": board_map[pos].player.id}
+            for pos in bot_flips
+        ],
         "named_scores": named_scores,
         "current_turn_id": human.id,
         "current_turn_name": human.user.username

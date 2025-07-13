@@ -1,8 +1,31 @@
 {% extends "base.html" %}
 {% block content %}
-  <h2>Welcome to ZenyZoo, {{ user.username }}!</h2>
+<h2>Welcome to ZenyZoo, {{ user.username }}!</h2>
 
-  {% include 'includes/chat.html' %}
+
+<style>
+  .stats-row {
+    display: flex;
+    gap: 2em;
+    margin: 2em 0;
+  }
+
+  .stat-box {
+    background: #222;
+    color: #fff;
+    border-radius: 0.7em;
+    padding: 1.2em;
+    font-size: 1.1em;
+    min-width: 120px;
+  }
+</style>
+<div class="stats-row">
+  <div class="stat-box">🌐 Total Users<br><b>{{ total_users }}</b></div>
+  <div class="stat-box">⚡ Active (1h)<br><b>{{ active_users }}</b></div>
+</div>
+
+
+{% include 'includes/chat.html' %}
 
 
 <!-- include about for music credits -->

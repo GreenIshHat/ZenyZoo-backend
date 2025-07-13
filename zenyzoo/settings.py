@@ -67,6 +67,7 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
     'whitenoise.middleware.WhiteNoiseMiddleware',
+    'game.middleware.UpdateLastSeenMiddleware', 
 ]
 
 ROOT_URLCONF = 'zenyzoo.urls'

@@ -1,7 +1,7 @@
 from django.db import models
 from django.db.models import Q, Count
 from django.contrib.auth.models import User
-
+from django.utils import timezone
 
 class Player(models.Model):
     # user = models.OneToOneField(User, on_delete=models.CASCADE)
@@ -9,6 +9,7 @@ class Player(models.Model):
 
     username = models.CharField(max_length=150, unique=True)
     created_at = models.DateTimeField(auto_now_add=True)
+    last_seen = models.DateTimeField(default=timezone.now)
     is_bot = models.BooleanField(default=False)
 
     credits = models.PositiveIntegerField(default=1000)
