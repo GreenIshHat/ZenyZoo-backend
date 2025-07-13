@@ -185,7 +185,18 @@ Feel free to extend this README with deployment, Docker, CI/CD, or environment-s
 
 
 
-**Play the alpha now:** [https://zenyzoo-backend.onrender.com/game/matches/](https://zenyzoo-backend.onrender.com/game/matches/)
+---
 
-*Bugs? Feedback? DM or email—see Support below.*
+**Play the Alpha Now:**  
+[https://zenyzoo-backend.onrender.com/game/matches/](https://zenyzoo-backend.onrender.com/game/matches/)
+
+> ⚠️ *Heads up!*  
+> On this free host, real-time multiplayer and chat (WebSockets) may not work reliably.  
+> For full gameplay—including live battles and chat—**clone and run locally** (see instructions above).  
+> Want to help us deploy on a real server? Sponsor or contribute? [Email us!](mailto:zenyzoogame@gmail.com) or [DM on Twitter](https://twitter.com/zenyzoogame).
+
+*Bugs? Feedback? See Support & Community below.*
+
+---
+
 
