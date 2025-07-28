@@ -1,11 +1,15 @@
 # Zenyzoo Django Project
 
-A turn-based card-battle web app built with Django and Django REST Framework. Play against friends or the built-in RandomBot, collect cards, track your stats, and climb the leaderboard.
-**Now includes experimental multiplayer and global chat with Django Channels.**
+![Gameplay demo](./zenyzoo-demo.gif)
 
 ---
 
-![Gameplay demo](./zenyzoo-demo.gif)
+## 🎥 Gameplay Video
+
+
+Watch: [ZenyZoo Alpha Gameplay on YouTube](https://youtu.be/dDfyy3xtMiY)
+
+*Note: Bot play is still buggy—two-player mode works! Feedback and fixes welcome!*
 
 ---
 
